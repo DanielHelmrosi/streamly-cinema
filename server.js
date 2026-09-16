@@ -1,4 +1,5 @@
 const express = require('express');
+const nodemailer = require('nodemailer');
 const QRCode = require('qrcode');
 const path = require('path');
 const fs = require('fs');
@@ -15,126 +16,12 @@ const readTickets = () => { try { return JSON.parse(fs.readFileSync(DB,'utf8'));
 const writeTickets = x => fs.writeFileSync(DB, JSON.stringify(x,null,2));
 const baseUrl = req => (process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`).replace(/\/$/,'');
 
-async function sendEmailViaMailjet({to, subject, html, qrBuffer}) {
-  const apiKey = process.env.MAILJET_API_KEY;
-  const secretKey = process.env.MAILJET_SECRET_KEY;
-  const fromEmail = process.env.MAIL_FROM;
-  const fromName = process.env.MAIL_FROM_NAME || 'Streamly';
-  if (!apiKey || !secretKey) throw new Error('MAILJET_API_KEY or MAILJET_SECRET_KEY is not configured');
-  if (!fromEmail) throw new Error('MAIL_FROM is not configured');
-
-  const auth = Buffer.from(`${apiKey}:${secretKey}`).toString('base64');
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
-  try {
-    const response = await fetch('https://api.mailjet.com/v3.1/send', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        Messages: [{
-          From: { Email: fromEmail, Name: fromName },
-          To: [{ Email: to }],
-          Subject: subject,
-          HTMLPart: html,
-          InlinedAttachments: [{
-            ContentType: 'image/png',
-            Filename: 'streamly-qr.png',
-            Base64Content: qrBuffer.toString('base64'),
-            ContentID: 'streamly-ticket-qr'
-          }]
-        }]
-      }),
-      signal: controller.signal
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(`Mailjet ${response.status}: ${JSON.stringify(data)}`);
-    }
-    const msg = data?.Messages?.[0] || {};
-    if (msg.Status && msg.Status !== 'success') {
-      throw new Error(`Mailjet send failed: ${JSON.stringify(msg.Errors || msg)}`);
-    }
-    const recipient = msg.To?.[0] || {};
-    return {
-      id: recipient.MessageID || recipient.MessageUUID || null,
-      messageId: recipient.MessageID || null,
-      messageUUID: recipient.MessageUUID || null,
-      messageHref: recipient.MessageHref || null,
-      raw: data
-    };
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-
-async function getMailjetJson(pathname) {
-  const apiKey = process.env.MAILJET_API_KEY;
-  const secretKey = process.env.MAILJET_SECRET_KEY;
-  const auth = Buffer.from(`${apiKey}:${secretKey}`).toString('base64');
-  const response = await fetch(`https://api.mailjet.com${pathname}`, {
-    method: 'GET',
-    headers: { 'Authorization': `Basic ${auth}`, 'Accept': 'application/json' }
-  });
-  const text = await response.text();
-  let data;
-  try { data = JSON.parse(text); } catch { data = { raw: text }; }
-  if (!response.ok) throw new Error(`HTTP ${response.status}: ${JSON.stringify(data)}`);
-  return data;
-}
-
-async function tryMailjet(label, pathname) {
-  try {
-    const data = await getMailjetJson(pathname);
-    console.log(`MAILJET DEBUG ${label}`, JSON.stringify(data, null, 2));
-    return data;
-  } catch (e) {
-    console.error(`MAILJET DEBUG ${label} ERROR:`, e?.message || e);
-    return null;
-  }
-}
-
-async function logMailjetDelivery({messageId, messageHref, to}, label='CHECK') {
-  console.log(`MAILJET DEBUG ${label}: recipient=${to} sendMessageID=${messageId || 'none'}`);
-
-  // Mailjet documents that a valid REST message ID should first be obtained
-  // from GET /v3/REST/message. Search by recipient so we don't rely only on
-  // the legacy MessageID returned by v3.1/send.
-  const list = await tryMailjet(
-    `${label} LIST BY RECIPIENT`,
-    `/v3/REST/message?ContactAlt=${encodeURIComponent(to)}&ShowContactAlt=true&ShowSubject=true&Limit=20`
-  );
-
-  const rows = Array.isArray(list?.Data) ? list.Data : [];
-  const numericSendId = messageId == null ? null : String(messageId);
-  const exact = rows.find(x => String(x.ID) === numericSendId);
-  const uuidMatch = rows.find(x => x.UUID && messageHref && String(messageHref).includes(String(x.ID)));
-  const selected = exact || uuidMatch || rows[0] || null;
-
-  if (!selected) {
-    console.error(`MAILJET DEBUG ${label}: no message found for recipient ${to}. If this stays empty, verify that MAILJET_API_KEY and MAILJET_SECRET_KEY belong to the same Mailjet subaccount used for sending.`);
-    return;
-  }
-
-  const restId = selected.ID;
-  console.log(`MAILJET DEBUG ${label} SELECTED`, JSON.stringify({
-    ID: selected.ID,
-    UUID: selected.UUID,
-    Status: selected.Status,
-    ArrivedAt: selected.ArrivedAt,
-    ContactAlt: selected.ContactAlt,
-    Subject: selected.Subject
-  }, null, 2));
-
-  await tryMailjet(`${label} MESSAGE ${restId}`, `/v3/REST/message/${encodeURIComponent(restId)}?ShowContactAlt=true&ShowSubject=true`);
-  await tryMailjet(`${label} HISTORY ${restId}`, `/v3/REST/messagehistory/${encodeURIComponent(restId)}`);
-  await tryMailjet(`${label} INFORMATION ${restId}`, `/v3/REST/messageinformation/${encodeURIComponent(restId)}`);
-  await tryMailjet(`${label} BOUNCE ${restId}`, `/v3/REST/bouncestatistics/${encodeURIComponent(restId)}`);
-}
-
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT || 587),
+  secure: String(process.env.SMTP_SECURE).toLowerCase()==='true',
+  auth: {user: process.env.SMTP_USER, pass: process.env.SMTP_PASS}
+});
 
 function ticketCard(t, ticketUrl, qrSrc='cid:streamly-ticket-qr'){
   return `<div style="margin:0 auto;max-width:620px;background:#08080a;color:#fff;border:1px solid #2b2b31;border-radius:28px;overflow:hidden;font-family:Arial,sans-serif">
@@ -162,26 +49,15 @@ app.post('/api/send-ticket', async (req,res)=>{
     tickets[t.id]={...t,createdAt:new Date().toISOString()}; writeTickets(tickets);
     const ticketUrl=`${baseUrl(req)}/ticket/${encodeURIComponent(t.id)}`;
     const qrBuffer=await QRCode.toBuffer(ticketUrl,{width:520,margin:2,errorCorrectionLevel:'M'});
-    const mail = await sendEmailViaMailjet({
-      to: t.email,
-      subject: `Streamly — билет на ${t.movie}`,
-      html: ticketCard(t, ticketUrl),
-      qrBuffer
+    await transporter.sendMail({
+      from: process.env.MAIL_FROM || process.env.SMTP_USER,
+      to:t.email,
+      subject:`Streamly — билет на ${t.movie}`,
+      html:ticketCard(t,ticketUrl),
+      attachments:[{filename:'streamly-qr.png',content:qrBuffer,cid:'streamly-ticket-qr'}]
     });
-    console.log('MAILJET SEND RESPONSE', JSON.stringify(mail.raw, null, 2));
-    console.log('EMAIL SENT', { id: mail.id, messageId: mail.messageId, to: t.email, ticket: t.id });
-
-    // Mailjet can accept a message before the final delivery event exists.
-    // Check the message shortly after sending, then once more after 30 seconds.
-    setTimeout(() => logMailjetDelivery({messageId: mail.messageId, messageHref: mail.messageHref, to: t.email}, 'STATUS +5s'), 5000);
-    setTimeout(() => logMailjetDelivery({messageId: mail.messageId, messageHref: mail.messageHref, to: t.email}, 'STATUS +30s'), 30000);
-
-    res.json({ok:true,ticketUrl,qrUrl:`/api/ticket/${encodeURIComponent(t.id)}/qr`,emailId:mail.id});
-  } catch(e){
-    console.error('SEND TICKET ERROR:', e?.name, e?.message);
-    const timeout = e?.name === 'AbortError';
-    res.status(timeout ? 504 : 500).json({ok:false,error:timeout ? 'email_timeout' : 'send_failed'});
-  }
+    res.json({ok:true,ticketUrl,qrUrl:`/api/ticket/${encodeURIComponent(t.id)}/qr`});
+  } catch(e){ console.error(e); res.status(500).json({ok:false,error:'send_failed'}); }
 });
 
 app.get('/api/ticket/:id/qr', async (req,res)=>{
