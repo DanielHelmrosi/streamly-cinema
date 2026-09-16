@@ -147,19 +147,24 @@ section{padding:28px 44px 0}.row-title{font-size:22px;margin:0 0 15px}.row{displ
 
 <div class="modal" id="movieModal">
   <div class="dialog">
-    <div class="trailer-box">
-      <div id="movieTrailer" style="aspect-ratio:16/9;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#2d2d35,#050505);padding:25px;text-align:center"></div>
-      <button class="close" onclick="closeMovieInfo()">×</button>
-    </div>
-    <div class="movie-body">
+    <div class="movie-body" style="padding-bottom:18px">
       <div class="movie-info">
         <img id="moviePoster" class="movie-poster" alt="">
         <div>
           <h2 id="movieInfoTitle"></h2>
           <p id="movieInfoMeta"></p>
-          <p id="movieInfoDesc"></p>
-          <p id="movieInfoCast"></p>
-          <div class="dialog-actions">
+          <h3 style="margin:18px 0 6px">О чём фильм</h3>
+          <p id="movieInfoDesc" style="font-size:16px;color:#ddd"></p>
+          <p id="movieInfoCast" style="font-size:15px"></p>
+        </div>
+      </div>
+    </div>
+    <div class="trailer-box" style="padding:0 25px 10px">
+      <div id="movieTrailer" style="min-height:110px;display:grid;place-items:center;background:#090909;padding:16px;text-align:center;border-radius:14px"></div>
+      <button class="close" onclick="closeMovieInfo()">×</button>
+    </div>
+    <div class="movie-body" style="padding-top:10px">
+      <div class="movie-info"><div style="width:100%"><div class="dialog-actions">
             <button class="primary" id="movieBookBtn">🎟 Выбрать билеты</button>
             <button class="secondary" onclick="closeMovieInfo()">Закрыть</button>
           </div>
@@ -362,7 +367,14 @@ function openMovieInfo(name){
  const q=m.trailer.match(/search_query=([^&]+)/),frame=document.getElementById("movieTrailer");
  const query=q?decodeURIComponent(q[1].replace(/\+/g," ")):(m.name+" official trailer");
  const ytSearch="https://www.youtube.com/results?search_query="+encodeURIComponent(query);
- frame.innerHTML=`<div style="width:100%"><div class="trailer-head"><b>Официальный трейлер</b><a class="trailer-external" href="${ytSearch}" target="_blank" rel="noopener">Открыть на YouTube ↗</a></div><iframe title="Трейлер ${m.name}" src="https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#000"></iframe><p style="font-size:12px;color:#888;margin:9px 0 0">Если YouTube не разрешит встроенное воспроизведение, нажмите «Открыть на YouTube».</p></div>`;
+ const officialIds={
+  "Дюна":"n9xhJrPXop4",
+  "Джокер":"zAGVQLHvwOY"
+ };
+ const vid=officialIds[m.name];
+ frame.innerHTML=vid
+   ? `<div style="width:100%"><div class="trailer-head"><b>▶ Официальный трейлер</b><a class="trailer-external" href="https://www.youtube.com/watch?v=${vid}" target="_blank" rel="noopener">YouTube ↗</a></div><iframe title="Трейлер ${m.name}" src="https://www.youtube-nocookie.com/embed/${vid}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#000"></iframe></div>`
+   : `<div style="width:100%;padding:22px"><div style="font-size:34px;margin-bottom:8px">▶</div><b style="font-size:18px">Трейлер фильма «${m.name}»</b><p style="margin:8px 0 16px;color:#aaa">Нажмите кнопку ниже — откроется трейлер этого фильма на YouTube.</p><a class="primary" style="display:inline-block;text-decoration:none" href="${ytSearch}" target="_blank" rel="noopener">Смотреть трейлер</a></div>`;
  document.getElementById("movieBookBtn").onclick=()=>{closeMovieInfo();show("booking",document.querySelectorAll("nav button")[3]);selectMovie(m.name)};
  document.getElementById("movieModal").classList.add("open");
 }
