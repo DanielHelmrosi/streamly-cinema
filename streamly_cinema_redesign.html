@@ -41,6 +41,8 @@ section{padding:28px 44px 0}.row-title{font-size:22px;margin:0 0 15px}.row{displ
 .checkout{max-width:1100px;margin:auto}.checkout-grid{display:grid;grid-template-columns:1.3fr .7fr;gap:20px}.panel{background:#151517;border:1px solid #303034;border-radius:20px;padding:24px}.panel input{width:100%;background:#0d0d0f;border:1px solid #3b3b40;color:#fff;padding:13px;border-radius:12px;margin:12px 0}.ticket{background:linear-gradient(135deg,#f7f7f8,#d7d7dc);color:#09090b;border-radius:22px;padding:24px}.ticket img{width:130px;height:130px;background:white;padding:7px;border-radius:12px}.card{border-radius:18px;height:315px}.card img{transition:.4s}.card:hover img{transform:scale(1.06)}@media(max-width:800px){.checkout-grid{grid-template-columns:1fr}}
 /* Enhanced movie browsing */
 .row-wrap{position:relative}.row{cursor:grab;scroll-behavior:smooth;user-select:none}.row.dragging{cursor:grabbing;scroll-behavior:auto}.row-arrow{position:absolute;z-index:8;top:50%;transform:translateY(-50%);width:46px;height:46px;border:1px solid #555;border-radius:50%;background:rgba(10,10,12,.86);color:#fff;font-size:25px;cursor:pointer;backdrop-filter:blur(12px);box-shadow:0 10px 30px #000}.row-arrow:hover{background:#fff;color:#000}.row-arrow.left{left:-18px}.row-arrow.right{right:-18px}.trailer-link{display:inline-flex;align-items:center;gap:8px;margin-top:12px;color:#fff;text-decoration:none;background:#2a2a2d;border:1px solid #444;padding:10px 14px;border-radius:10px}.qr-shell{background:#fff;color:#111;border-radius:22px;padding:18px;display:grid;place-items:center;position:relative;overflow:hidden;border:8px solid #111}.qr-shell:before,.qr-shell:after{content:"";position:absolute;width:54px;height:54px;border-radius:50%;background:#151517}.qr-shell:before{left:-34px;top:50%}.qr-shell:after{right:-34px;top:50%}.qr-shell img{width:190px;height:190px;border-radius:10px}.qr-brand{font-weight:900;letter-spacing:.18em;font-size:11px;margin-bottom:10px}.email-status{margin-top:12px;padding:12px;border-radius:12px;background:#0d0d0f;color:#bbb;font-size:13px}.ticket-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em}.free-badge{display:inline-block;background:#111;color:#fff;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800}.poster-note{font-size:12px;color:#777;margin-top:10px}
+
+.ticket-open-btn{margin-top:8px}.ticket-modal-card{width:min(620px,100%);background:#101012;border:1px solid #333;border-radius:24px;padding:26px;position:relative}.ticket-modal-card h2{margin:8px 0}.ticket-modal-grid{display:grid;grid-template-columns:1fr 230px;gap:24px;align-items:center}.ticket-modal-qr{background:#fff;border-radius:18px;padding:12px;width:230px;height:230px}.ticket-modal-qr img{width:100%;height:100%;display:block}.ticket-status{display:inline-block;background:#dff7e7;color:#14532d;padding:7px 10px;border-radius:999px;font-weight:800;font-size:12px}.trailer-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}.trailer-head b{font-size:16px}.trailer-external{color:#fff;text-decoration:none;border:1px solid #555;padding:8px 11px;border-radius:9px;font-size:13px}@media(max-width:620px){.ticket-modal-grid{grid-template-columns:1fr}.ticket-modal-qr{width:100%;height:auto;aspect-ratio:1}}
 </style>
 </head>
 <body>
@@ -164,6 +166,13 @@ section{padding:28px 44px 0}.row-title{font-size:22px;margin:0 0 15px}.row{displ
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="modal" id="ticketModal">
+  <div class="ticket-modal-card">
+    <button class="close" onclick="closeTicket()">×</button>
+    <div id="ticketModalContent"></div>
   </div>
 </div>
 
@@ -320,12 +329,20 @@ function issueTicket(){
 function remainingText(expiresAt){const ms=Math.max(0,expiresAt-Date.now()),m=Math.floor(ms/60000),sec=Math.floor((ms%60000)/1000);return `${m}:${String(sec).padStart(2,'0')}`}
 function purgeExpiredTickets(){const before=orders.length;orders=orders.filter(o=>(o.expiresAt||0)>Date.now());if(orders.length!==before)localStorage.setItem("streamly-orders",JSON.stringify(orders));renderOrders();const pt=document.getElementById('previewTimer');if(pt){const newest=orders[0];pt.textContent=newest?`Осталось: ${remainingText(newest.expiresAt)}`:'Срок действия билета истёк';}}
 
+function escHtml(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function openTicket(code){
+ const o=orders.find(x=>(x.code||String(x.id))===code);if(!o){toast("Билет не найден или срок действия истёк");return}
+ const qr=o.qr||`https://api.qrserver.com/v1/create-qr-code/?size=360x360&data=${encodeURIComponent('STREAMLY:'+code)}`;
+ document.getElementById("ticketModalContent").innerHTML=`<span class="ticket-status">● БИЛЕТ ДЕЙСТВИТЕЛЕН</span><h2>${escHtml(o.movie)}</h2><p style="color:#aaa">${escHtml(o.cinema)}</p><div class="ticket-modal-grid"><div><p><small style="color:#777">ДАТА И ВРЕМЯ</small><br><b>${new Date(o.date).toLocaleDateString("ru-RU")} · ${escHtml(o.time)}</b></p><p><small style="color:#777">МЕСТА</small><br><b>${escHtml(o.seats.join(", "))}</b></p><p><small style="color:#777">КОД БИЛЕТА</small><br><span class="ticket-code">${escHtml(code)}</span></p><p><b>Осталось: <span class="ticket-countdown" data-exp="${o.expiresAt}">${remainingText(o.expiresAt)}</span></b></p><p style="color:#888;font-size:13px">Покажите этот QR-код при входе. Его можно отсканировать камерой или QR-сканером.</p></div><div class="ticket-modal-qr"><img src="${qr}" alt="QR-код билета"></div></div>`;
+ document.getElementById("ticketModal").classList.add("open");
+}
+function closeTicket(){document.getElementById("ticketModal").classList.remove("open")}
 function renderOrders(){
  const now=Date.now();orders=orders.filter(o=>(o.expiresAt||0)>now);localStorage.setItem("streamly-orders",JSON.stringify(orders));
  const box=document.getElementById("ordersList");
  if(!orders.length){box.className="empty";box.textContent="Активных билетов нет. После оформления билет будет храниться здесь 10 минут.";return}
  box.className="";
- box.innerHTML=orders.map(o=>{const code=o.code||String(o.id),qr=o.qr||`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent('STREAMLY:'+code)}`;return `<div class="booking" style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:18px"><div><span class="free-badge">АКТИВЕН</span><b style="display:block;margin-top:10px">${o.movie}</b><p>${o.cinema} · ${new Date(o.date).toLocaleDateString("ru-RU")} · ${o.time}</p><p>Места: ${o.seats.join(", ")} · <b>€0.00</b></p><small style="color:#777">${code}</small><p style="font-weight:800">Исчезнет через <span class="ticket-countdown" data-exp="${o.expiresAt}">${remainingText(o.expiresAt)}</span></p></div><img src="${qr}" style="width:120px;height:120px;background:#fff;padding:6px;border-radius:12px" alt="QR"></div>`}).join("");
+ box.innerHTML=orders.map(o=>{const code=o.code||String(o.id),qr=o.qr||`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent('STREAMLY:'+code)}`;return `<div class="booking" onclick="openTicket('${code}')" style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:18px;cursor:pointer"><div><span class="free-badge">АКТИВЕН</span><b style="display:block;margin-top:10px">${o.movie}</b><p>${o.cinema} · ${new Date(o.date).toLocaleDateString("ru-RU")} · ${o.time}</p><p>Места: ${o.seats.join(", ")} · <b>€0.00</b></p><small style="color:#777">${code}</small><p style="font-weight:800">Исчезнет через <span class="ticket-countdown" data-exp="${o.expiresAt}">${remainingText(o.expiresAt)}</span></p><button class="primary ticket-open-btn" onclick="event.stopPropagation();openTicket('${code}')">Открыть билет и QR</button></div><img src="${qr}" style="width:120px;height:120px;background:#fff;padding:6px;border-radius:12px" alt="QR"></div>`}).join("");
 }
 
 function show(id,btn){
@@ -343,7 +360,9 @@ function openMovieInfo(name){
  document.getElementById("movieInfoCast").innerHTML="<b>В ролях:</b> "+m.cast;
  document.getElementById("moviePoster").src=m.img;
  const q=m.trailer.match(/search_query=([^&]+)/),frame=document.getElementById("movieTrailer");
- frame.src=q?"https://www.youtube.com/embed?listType=search&list="+encodeURIComponent(decodeURIComponent(q[1])):m.trailer;
+ const query=q?decodeURIComponent(q[1].replace(/\+/g," ")):(m.name+" official trailer");
+ const ytSearch="https://www.youtube.com/results?search_query="+encodeURIComponent(query);
+ frame.innerHTML=`<div style="width:100%"><div class="trailer-head"><b>Официальный трейлер</b><a class="trailer-external" href="${ytSearch}" target="_blank" rel="noopener">Открыть на YouTube ↗</a></div><iframe title="Трейлер ${m.name}" src="https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#000"></iframe><p style="font-size:12px;color:#888;margin:9px 0 0">Если YouTube не разрешит встроенное воспроизведение, нажмите «Открыть на YouTube».</p></div>`;
  document.getElementById("movieBookBtn").onclick=()=>{closeMovieInfo();show("booking",document.querySelectorAll("nav button")[3]);selectMovie(m.name)};
  document.getElementById("movieModal").classList.add("open");
 }
@@ -360,6 +379,7 @@ function toast(t){const x=document.getElementById("toast");x.textContent=t;x.sty
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>show(b.dataset.section,b));
 document.getElementById("movieModal").onclick=e=>{if(e.target.id==="movieModal")closeMovieInfo()};
 document.getElementById("registerModal").onclick=e=>{if(e.target.id==="registerModal")closeRegister()};
+document.getElementById("ticketModal").onclick=e=>{if(e.target.id==="ticketModal")closeTicket()};
 document.getElementById("search").oninput=()=>{
  const q=document.getElementById("search").value.toLowerCase();
  document.querySelectorAll(".card").forEach(c=>c.style.display=c.dataset.name.includes(q)?"block":"none");
