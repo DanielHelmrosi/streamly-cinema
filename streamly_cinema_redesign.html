@@ -137,7 +137,7 @@ section{padding:28px 44px 0}.row-title{font-size:22px;margin:0 0 15px}.row{displ
     </div>
   </section>
 
-<section id="checkout" style="display:none"><div class="checkout"><h2 class="row-title">Оформление билета</h2><div class="checkout-grid"><div class="panel"><h2>Электронный билет</h2><p class="subtitle">Билет появится прямо на сайте в разделе «Мои билеты» и будет действовать 10 минут. После этого он автоматически исчезнет.</p><button class="primary" onclick="issueTicket()">Получить билет</button><div id="emailStatus" class="email-status">Письмо на e-mail не требуется — билет хранится в этом браузере 10 минут.</div><div id="checkoutRecap" style="margin-top:20px"></div></div><div class="ticket" id="ticketPreview"><small>STREAMLY PASS</small><h2>Ваш QR-билет</h2><p>Появится после оформления.</p></div></div></div></section>
+<section id="checkout" style="display:none"><div class="checkout"><h2 class="row-title">Оформление билета</h2><div class="checkout-grid"><div class="panel"><h2>Электронный билет</h2><p class="subtitle">Укажите e-mail. QR-билет появится в «Мои билеты» и одновременно будет отправлен вам на почту. Билет действует 10 минут.</p><input id="ticketEmail" type="email" autocomplete="email" placeholder="name@example.com"><button class="primary" onclick="issueTicket()">Получить QR-билет на e-mail</button><div id="emailStatus" class="email-status">После оформления QR-код будет отправлен на указанную почту.</div><div id="checkoutRecap" style="margin-top:20px"></div></div><div class="ticket" id="ticketPreview"><small>STREAMLY PASS</small><h2>Ваш QR-билет</h2><p>Появится после оформления.</p></div></div></div></section>
   <section id="orders" style="display:none">
     <h2 class="row-title">Мои билеты</h2>
     <div id="ordersList" class="empty">После покупки здесь появятся ваши электронные билеты.</div>
@@ -320,16 +320,56 @@ function updateSummary(){
  document.getElementById("summarySeats").textContent="Места: "+(state.seats.length?state.seats.join(", "):"—");
  document.getElementById("total").textContent="€"+(state.movie?state.movie.price*state.seats.length:0).toFixed(2);
 }
-function buy(){if(!state.movie||!state.cinema||!state.date||!state.time||!state.seats.length){toast("Заполните все шаги и выберите места");return}document.getElementById("checkoutRecap").innerHTML=`<div class="booking"><b>${state.movie.name}</b><p>${state.cinema.name} · ${state.date} · ${state.time}</p><p>Места: ${state.seats.join(", ")}</p><p><s>€${(state.movie.price*state.seats.length).toFixed(2)}</s> &nbsp; <b>€0.00</b></p></div>`;show("checkout",document.querySelector('[data-section="checkout"]'))}
-function issueTicket(){
- if(!state.movie||!state.cinema||!state.date||!state.time||!state.seats.length){toast("Сначала выберите билет");return}
- const id="ST"+Date.now().toString(36).toUpperCase();
- const createdAt=Date.now(),expiresAt=createdAt+10*60*1000;
- const order={movie:state.movie.name,cinema:state.cinema.name,date:state.date,time:state.time,seats:[...state.seats],total:0,id,code:id,createdAt,expiresAt};
- order.qr=`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent('STREAMLY:'+id)}`;
- orders.unshift(order);localStorage.setItem("streamly-orders",JSON.stringify(orders));renderOrders();
- document.getElementById("ticketPreview").innerHTML=`<span class="free-badge">АКТИВЕН 10 МИНУТ</span><h2>${order.movie}</h2><p>${order.cinema}<br>${new Date(order.date).toLocaleDateString("ru-RU")} · ${order.time}<br>Места: ${order.seats.join(", ")}</p><div class="qr-shell"><div><div class="qr-brand">STREAMLY PASS</div><img src="${order.qr}" alt="QR-билет"><div class="ticket-code">${id}</div></div></div><p id="previewTimer" style="font-size:13px;font-weight:700">Осталось: 10:00</p>`;
- document.getElementById("emailStatus").textContent="✓ Билет создан и добавлен в «Мои билеты»";toast("Билет создан на 10 минут");
+function buy(){if(!state.movie||!state.cinema||!state.date||!state.time||!state.seats.length){toast("Заполните все шаги и выберите места");return}const u=JSON.parse(localStorage.getItem("streamly-user")||"null");const emailInput=document.getElementById("ticketEmail");if(u?.email&&!emailInput.value)emailInput.value=u.email;document.getElementById("checkoutRecap").innerHTML=`<div class="booking"><b>${state.movie.name}</b><p>${state.cinema.name} · ${state.date} · ${state.time}</p><p>Места: ${state.seats.join(", ")}</p><p><s>€${(state.movie.price*state.seats.length).toFixed(2)}</s> &nbsp; <b>€0.00</b></p></div>`;show("checkout",document.querySelector('[data-section="checkout"]'))}
+async function issueTicket(){
+  if(!state.movie||!state.cinema||!state.date||!state.time||!state.seats.length){toast("Сначала выберите билет");return}
+  const email=document.getElementById("ticketEmail").value.trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){toast("Введите правильный e-mail");return}
+
+  const id="ST"+Date.now().toString(36).toUpperCase();
+  const status=document.getElementById("emailStatus");
+  status.textContent="Создаём QR-код и отправляем письмо…";
+
+  const payload={
+    id,
+    code:id,
+    email,
+    movie:state.movie.name,
+    cinema:state.cinema.name,
+    date:state.date,
+    time:state.time,
+    seats:[...state.seats],
+    total:0
+  };
+
+  try{
+    const r=await fetch("/api/send-ticket",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload)
+    });
+    let data={};
+    try{data=await r.json()}catch(_){}
+    if(!r.ok)throw new Error(data.error||("Ошибка сервера "+r.status));
+
+    const createdAt=Date.now();
+    const expiresAt=data.expiresAt ? new Date(data.expiresAt).getTime() : createdAt+10*60*1000;
+    const order={...payload,createdAt,expiresAt};
+    order.qr=data.qrUrl||`/api/ticket/${encodeURIComponent(id)}/qr`;
+    order.ticketUrl=data.ticketUrl||`/ticket/${encodeURIComponent(id)}`;
+
+    orders.unshift(order);
+    localStorage.setItem("streamly-orders",JSON.stringify(orders));
+    renderOrders();
+
+    document.getElementById("ticketPreview").innerHTML=`<span class="free-badge">АКТИВЕН 10 МИНУТ</span><h2>${escHtml(order.movie)}</h2><p>${escHtml(order.cinema)}<br>${new Date(order.date).toLocaleDateString("ru-RU")} · ${escHtml(order.time)}<br>Места: ${escHtml(order.seats.join(", "))}</p><div class="qr-shell"><div><div class="qr-brand">STREAMLY PASS</div><img src="${order.qr}" alt="QR-билет"><div class="ticket-code">${escHtml(id)}</div></div></div><p id="previewTimer" style="font-size:13px;font-weight:700">Осталось: ${remainingText(expiresAt)}</p>`;
+    status.textContent=`✓ QR-билет отправлен на ${email}`;
+    toast("QR-билет отправлен на e-mail");
+  }catch(e){
+    console.error("Ошибка отправки билета:",e);
+    status.textContent="Не удалось отправить QR-билет: "+(e.message||"ошибка сервера");
+    toast("Ошибка отправки на e-mail");
+  }
 }
 function remainingText(expiresAt){const ms=Math.max(0,expiresAt-Date.now()),m=Math.floor(ms/60000),sec=Math.floor((ms%60000)/1000);return `${m}:${String(sec).padStart(2,'0')}`}
 function purgeExpiredTickets(){const before=orders.length;orders=orders.filter(o=>(o.expiresAt||0)>Date.now());if(orders.length!==before)localStorage.setItem("streamly-orders",JSON.stringify(orders));renderOrders();const pt=document.getElementById('previewTimer');if(pt){const newest=orders[0];pt.textContent=newest?`Осталось: ${remainingText(newest.expiresAt)}`:'Срок действия билета истёк';}}

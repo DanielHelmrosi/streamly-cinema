@@ -1,93 +1,97 @@
-const express=require('express');
-const nodemailer=require('nodemailer');
-const QRCode=require('qrcode');
-const path=require('path');
-const fs=require('fs');
-require('dotenv').config();
+require("dotenv").config();
+const express=require("express");
+const nodemailer=require("nodemailer");
+const QRCode=require("qrcode");
+const path=require("path");
 
 const app=express();
 const PORT=Number(process.env.PORT||3000);
-const DB=path.join(__dirname,'tickets.json');
 const LIFE=10*60*1000;
-app.use(express.json({limit:'1mb'}));
+const tickets=new Map();
+
+app.use(express.json({limit:"1mb"}));
 app.use(express.static(__dirname));
 
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const readTickets=()=>{try{return JSON.parse(fs.readFileSync(DB,'utf8'))}catch{return {}}};
-const writeTickets=x=>fs.writeFileSync(DB,JSON.stringify(x,null,2));
-const baseUrl=req=>(process.env.PUBLIC_BASE_URL||`${req.protocol}://${req.get('host')}`).replace(/\/+$/,'');
-const expired=t=>!t?.expiresAt||Date.now()>=Date.parse(t.expiresAt);
-
-const mailer=nodemailer.createTransport({
-  host:process.env.SMTP_HOST||'smtp.gmail.com',
+const transporter=nodemailer.createTransport({
+  host:process.env.SMTP_HOST||"smtp.gmail.com",
   port:Number(process.env.SMTP_PORT||587),
-  secure:String(process.env.SMTP_SECURE||'false').toLowerCase()==='true',
+  secure:String(process.env.SMTP_SECURE||"false").toLowerCase()==="true",
   auth:{user:process.env.SMTP_USER,pass:process.env.SMTP_PASS}
 });
 
-function emailHtml(t,url){
- return `<!doctype html><html><body style="margin:0;padding:24px;background:#eee;font-family:Arial">
- <div style="max-width:620px;margin:auto;background:#0b0b0e;color:#fff;border-radius:24px;overflow:hidden">
- <div style="padding:28px;background:#19191f"><div style="letter-spacing:4px;color:#999;font-size:12px">STREAMLY PASS</div>
- <h1>${esc(t.movie)}</h1><div style="color:#aaa">${esc(t.cinema||'')}</div></div>
- <div style="padding:28px"><p><b>Дата:</b> ${esc(t.date||'')}</p><p><b>Время:</b> ${esc(t.time||'')}</p>
- <p><b>Места:</b> ${esc((t.seats||[]).join(', '))}</p><p><b>Код:</b> ${esc(t.id)}</p>
- <div style="background:#fff;padding:14px;border-radius:18px;width:260px;max-width:90%;margin:24px 0">
- <img src="cid:streamly-ticket-qr" style="display:block;width:100%" alt="QR-код"></div>
- <p style="color:#aaa">QR-код действует 10 минут с момента создания билета.</p>
- <a href="${esc(url)}" style="display:inline-block;background:#fff;color:#000;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:bold">Открыть билет</a>
- </div></div></body></html>`;
+function publicBase(req){
+  const configured=String(process.env.PUBLIC_BASE_URL||"").trim().replace(/\/+$/,"");
+  return configured||`${req.protocol}://${req.get("host")}`;
+}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function getTicket(id){
+  const t=tickets.get(id);
+  if(!t)return null;
+  if(Date.now()>=t.expiresAt){tickets.delete(id);return null}
+  return t;
 }
 
-app.post('/api/send-ticket',async(req,res)=>{
- try{
-  const t=req.body||{};
-  if(!t.email||!t.id||!t.movie||!Array.isArray(t.seats)||!t.seats.length)
-    return res.status(400).json({ok:false,error:'invalid_ticket'});
-  if(!process.env.SMTP_USER||!process.env.SMTP_PASS) throw new Error('SMTP_USER / SMTP_PASS are not configured');
+app.post("/api/send-ticket",async(req,res)=>{
+  try{
+    const {email,id,movie,cinema,date,time,seats}=req.body||{};
+    if(!email||!id||!movie||!cinema||!date||!time||!Array.isArray(seats)||!seats.length)
+      return res.status(400).json({error:"Не заполнены данные билета"});
 
-  const now=Date.now();
-  const ticket={...t,createdAt:new Date(now).toISOString(),expiresAt:new Date(now+LIFE).toISOString()};
-  const tickets=readTickets(); tickets[ticket.id]=ticket; writeTickets(tickets);
-  const url=`${baseUrl(req)}/ticket/${encodeURIComponent(ticket.id)}`;
-  const qr=await QRCode.toBuffer(url,{width:600,margin:2,errorCorrectionLevel:'M'});
+    const createdAt=Date.now(),expiresAt=createdAt+LIFE;
+    const ticket={email,id,movie,cinema,date,time,seats,createdAt,expiresAt};
+    tickets.set(id,ticket);
 
-  const info=await mailer.sendMail({
-   from:process.env.MAIL_FROM||`"Streamly" <${process.env.SMTP_USER}>`,
-   to:ticket.email,
-   subject:`Streamly — билет на ${ticket.movie}`,
-   html:emailHtml(ticket,url),
-   attachments:[{filename:'streamly-ticket-qr.png',content:qr,contentType:'image/png',cid:'streamly-ticket-qr'}]
-  });
-  console.log('EMAIL SENT',{messageId:info.messageId,to:ticket.email,ticket:ticket.id});
-  res.json({ok:true,ticketUrl:url,qrUrl:`/api/ticket/${encodeURIComponent(ticket.id)}/qr`,expiresAt:ticket.expiresAt});
- }catch(e){
-  console.error('SEND TICKET ERROR:',e.message);
-  res.status(500).json({ok:false,error:'send_failed',message:e.message});
- }
+    const base=publicBase(req);
+    const ticketUrl=`${base}/ticket/${encodeURIComponent(id)}`;
+    const qrUrl=`${base}/api/ticket/${encodeURIComponent(id)}/qr`;
+    const qrPng=await QRCode.toBuffer(ticketUrl,{type:"png",width:420,margin:2});
+
+    const from=process.env.MAIL_FROM||`Streamly <${process.env.SMTP_USER}>`;
+    await transporter.sendMail({
+      from,to:email,
+      subject:`Streamly — QR-билет: ${movie}`,
+      text:`Ваш билет Streamly\n${movie}\n${cinema}\n${date} ${time}\nМеста: ${seats.join(", ")}\nКод: ${id}\nБилет действует 10 минут.\n${ticketUrl}`,
+      html:`<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:24px;background:#111;color:#fff;border-radius:18px">
+        <div style="font-size:13px;letter-spacing:.16em;color:#aaa">STREAMLY PASS</div>
+        <h1 style="margin:12px 0">${esc(movie)}</h1>
+        <p style="line-height:1.7;color:#ddd">${esc(cinema)}<br>${esc(date)} · ${esc(time)}<br>Места: <b>${esc(seats.join(", "))}</b></p>
+        <div style="background:#fff;padding:14px;border-radius:16px;display:inline-block"><img src="cid:streamly-ticket-qr" width="260" height="260" alt="QR-билет"></div>
+        <p>Код билета: <b>${esc(id)}</b></p>
+        <p style="color:#ffcc66"><b>QR-билет действует 10 минут после оформления.</b></p>
+        <p><a href="${ticketUrl}" style="display:inline-block;background:#fff;color:#000;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:bold">Открыть билет</a></p>
+      </div>`,
+      attachments:[{filename:"streamly-ticket-qr.png",content:qrPng,cid:"streamly-ticket-qr"}]
+    });
+
+    res.json({ok:true,ticketUrl,qrUrl,expiresAt:new Date(expiresAt).toISOString()});
+  }catch(err){
+    console.error("SEND MAIL ERROR:",err);
+    res.status(500).json({error:"Не удалось отправить письмо. Проверьте SMTP в Render."});
+  }
 });
 
-app.get('/api/ticket/:id/qr',async(req,res)=>{
- const tickets=readTickets(),t=tickets[req.params.id];
- if(!t||expired(t)){if(t){delete tickets[req.params.id];writeTickets(tickets)}return res.status(410).send('Ticket expired')}
- const url=`${baseUrl(req)}/ticket/${encodeURIComponent(req.params.id)}`;
- res.type('png').send(await QRCode.toBuffer(url,{width:600,margin:2,errorCorrectionLevel:'M'}));
+app.get("/api/ticket/:id/qr",async(req,res)=>{
+  const t=getTicket(req.params.id);
+  if(!t)return res.status(410).send("Билет не найден или срок действия истёк");
+  try{
+    const png=await QRCode.toBuffer(`${publicBase(req)}/ticket/${encodeURIComponent(t.id)}`,{type:"png",width:420,margin:2});
+    res.type("png").send(png);
+  }catch(e){res.status(500).send("QR error")}
 });
 
-app.get('/ticket/:id',async(req,res)=>{
- const tickets=readTickets(),t=tickets[req.params.id];
- if(!t||expired(t)){if(t){delete tickets[req.params.id];writeTickets(tickets)}
-  return res.status(410).send('<!doctype html><meta charset="utf-8"><body style="background:#08080a;color:white;font-family:Arial;text-align:center;padding-top:20vh"><h1>Билет больше не действует</h1><p>Срок действия QR-кода — 10 минут.</p></body>')}
- const url=`${baseUrl(req)}/ticket/${encodeURIComponent(t.id)}`;
- const qr=await QRCode.toDataURL(url,{width:600,margin:2,errorCorrectionLevel:'M'});
- const remain=Math.max(0,Date.parse(t.expiresAt)-Date.now());
- res.send(`<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
- <title>Streamly — ${esc(t.movie)}</title><style>*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:#070709;color:#fff;font-family:Arial}.ticket{width:min(600px,100%);background:#111116;border:1px solid #333;border-radius:26px;overflow:hidden}.top,.body{padding:26px}.top{background:#1b1b21}.brand{letter-spacing:4px;color:#999;font-size:12px}.grid{display:grid;grid-template-columns:1fr 220px;gap:24px;align-items:center}.label{font-size:11px;color:#777;margin-top:15px}.value{font-size:22px;font-weight:bold}.qr{background:#fff;padding:12px;border-radius:18px}.qr img{display:block;width:100%}.timer{margin-top:22px;padding:13px;background:#202027;border-radius:12px}@media(max-width:560px){.grid{grid-template-columns:1fr}.qr{max-width:260px}}</style></head><body>
- <article class="ticket"><div class="top"><div class="brand">STREAMLY PASS</div><h1>${esc(t.movie)}</h1><div>${esc(t.cinema||'')}</div></div><div class="body"><div class="grid"><div>
- <div class="label">ДАТА</div><div class="value">${esc(t.date||'')}</div><div class="label">ВРЕМЯ</div><div class="value">${esc(t.time||'')}</div><div class="label">МЕСТА</div><div class="value">${esc((t.seats||[]).join(', '))}</div><div class="label">КОД</div><div>${esc(t.id)}</div>
- </div><div class="qr"><img src="${qr}"></div></div><div class="timer">Билет действует ещё: <b id="left"></b></div></div></article>
- <script>let left=${remain};const el=document.getElementById('left');function tick(){if(left<=0){location.reload();return}const s=Math.ceil(left/1000),m=Math.floor(s/60),r=s%60;el.textContent=m+':'+String(r).padStart(2,'0');left-=1000}tick();setInterval(tick,1000)</script></body></html>`);
+app.get("/ticket/:id",(req,res)=>{
+  const t=getTicket(req.params.id);
+  if(!t)return res.status(410).send("<h1>Билет больше не действует</h1><p>Срок действия QR-билета истёк.</p>");
+  res.send(`<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Streamly Pass</title>
+  <body style="margin:0;background:#090909;color:#fff;font-family:Arial,sans-serif;display:grid;min-height:100vh;place-items:center">
+  <main style="width:min(520px,90%);background:#171717;border:1px solid #333;border-radius:22px;padding:28px;text-align:center">
+  <div style="letter-spacing:.18em;color:#aaa;font-size:12px">STREAMLY PASS</div><h1>${esc(t.movie)}</h1>
+  <p>${esc(t.cinema)}<br>${esc(t.date)} · ${esc(t.time)}<br>Места: <b>${esc(t.seats.join(", "))}</b></p>
+  <img src="/api/ticket/${encodeURIComponent(t.id)}/qr" style="width:260px;max-width:90%;background:#fff;padding:12px;border-radius:16px">
+  <p>Код: <b>${esc(t.id)}</b></p><p id="timer">Билет действует 10 минут</p>
+  <script>const exp=${t.expiresAt};setInterval(()=>{const s=Math.max(0,Math.ceil((exp-Date.now())/1000));document.getElementById("timer").textContent=s?"Осталось: "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0"):"Срок действия истёк";if(!s)setTimeout(()=>location.reload(),800)},1000)</script>
+  </main></body></html>`);
 });
 
-app.get('/',(_,res)=>res.sendFile(path.join(__dirname,'streamly_cinema_redesign.html')));
+app.get("/",(_,res)=>res.sendFile(path.join(__dirname,"streamly_cinema_redesign.html")));
 app.listen(PORT,()=>console.log(`Streamly: http://localhost:${PORT}`));
