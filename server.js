@@ -13,10 +13,16 @@ app.use(express.json({limit:"1mb"}));
 app.use(express.static(__dirname));
 
 const transporter=nodemailer.createTransport({
-  host:process.env.SMTP_HOST||"smtp.gmail.com",
+  host:String(process.env.SMTP_HOST||"smtp.gmail.com").trim(),
   port:Number(process.env.SMTP_PORT||587),
-  secure:String(process.env.SMTP_SECURE||"false").toLowerCase()==="true",
-  auth:{user:process.env.SMTP_USER,pass:process.env.SMTP_PASS}
+  secure:String(process.env.SMTP_SECURE||"false").trim().toLowerCase()==="true",
+  auth:{
+    user:String(process.env.SMTP_USER||"").trim(),
+    pass:String(process.env.SMTP_PASS||"").replace(/\s+/g,"")
+  },
+  connectionTimeout:12000,
+  greetingTimeout:12000,
+  socketTimeout:15000
 });
 
 function publicBase(req){
@@ -31,11 +37,21 @@ function getTicket(id){
   return t;
 }
 
+app.get("/api/health",(_,res)=>res.json({
+  ok:true,
+  smtpConfigured:Boolean(process.env.SMTP_USER&&process.env.SMTP_PASS),
+  host:String(process.env.SMTP_HOST||"smtp.gmail.com").trim(),
+  port:Number(process.env.SMTP_PORT||587)
+}));
+
 app.post("/api/send-ticket",async(req,res)=>{
   try{
     const {email,id,movie,cinema,date,time,seats}=req.body||{};
     if(!email||!id||!movie||!cinema||!date||!time||!Array.isArray(seats)||!seats.length)
       return res.status(400).json({error:"Не заполнены данные билета"});
+
+    if(!process.env.SMTP_USER||!process.env.SMTP_PASS)
+      return res.status(500).json({error:"SMTP_USER или SMTP_PASS не настроены в Render"});
 
     const createdAt=Date.now(),expiresAt=createdAt+LIFE;
     const ticket={email,id,movie,cinema,date,time,seats,createdAt,expiresAt};
@@ -65,8 +81,20 @@ app.post("/api/send-ticket",async(req,res)=>{
 
     res.json({ok:true,ticketUrl,qrUrl,expiresAt:new Date(expiresAt).toISOString()});
   }catch(err){
-    console.error("SEND MAIL ERROR:",err);
-    res.status(500).json({error:"Не удалось отправить письмо. Проверьте SMTP в Render."});
+    const id=req.body&&req.body.id;
+    if(id)tickets.delete(id);
+    console.error("SEND MAIL ERROR:",{
+      code:err.code,
+      command:err.command,
+      response:err.response,
+      message:err.message
+    });
+    const detail=err.code==="EAUTH"
+      ?"Gmail отклонил вход. Проверьте SMTP_USER и пароль приложения Google."
+      : err.code==="ETIMEDOUT"||err.code==="ESOCKET"
+      ?"Render не смог подключиться к SMTP Gmail вовремя."
+      :"Не удалось отправить письмо. Проверьте SMTP-переменные в Render.";
+    res.status(500).json({error:detail});
   }
 });
 
