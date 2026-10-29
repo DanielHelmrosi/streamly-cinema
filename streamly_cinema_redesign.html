@@ -78,10 +78,10 @@ body{top:0!important}.skiptranslate{display:none!important}
 
 <main>
   <div class="search"><input id="search" placeholder="Поиск фильма"></div>
-  <div class="language-switch" aria-label="Website language">
-    <button type="button" data-lang="ru" class="active" onclick="setSiteLanguage('ru')">RU</button>
-    <button type="button" data-lang="et" onclick="setSiteLanguage('et')">ET</button>
-    <button type="button" data-lang="en" onclick="setSiteLanguage('en')">EN</button>
+  <div class="language-switch notranslate" translate="no" aria-label="Website language">
+    <button type="button" class="notranslate active" translate="no" data-lang="ru" onclick="setSiteLanguage('ru')">RU</button>
+    <button type="button" class="notranslate" translate="no" data-lang="et" onclick="setSiteLanguage('et')">ET</button>
+    <button type="button" class="notranslate" translate="no" data-lang="en" onclick="setSiteLanguage('en')">EN</button>
   </div>
   <div id="google_translate_element" style="display:none"></div>
 
@@ -384,7 +384,7 @@ async function issueTicket(){
     localStorage.setItem("streamly-orders",JSON.stringify(orders));
     renderOrders();
 
-    document.getElementById("ticketPreview").innerHTML=`<span class="free-badge">БИЛЕТ АКТИВЕН</span><h2>${escHtml(order.movie)}</h2><p>${escHtml(order.cinema)}<br>${new Date(order.date).toLocaleDateString("ru-RU")} · ${escHtml(order.time)}<br>Места: ${escHtml(order.seats.join(", "))}</p><div class="qr-shell"><div><div class="qr-brand">STREAMLY PASS</div><img src="${order.qr}" alt="QR-билет"><div class="ticket-code">${escHtml(id)}</div></div></div>`;
+    document.getElementById("ticketPreview").innerHTML=`<div style="text-align:center"><small>STREAMLY PASS</small><h2>${escHtml(order.movie)}</h2><p>${escHtml(order.cinema)}<br>${new Date(order.date).toLocaleDateString("ru-RU")} · ${escHtml(order.time)}<br>Места: ${escHtml(order.seats.join(", "))}</p><div class="qr-shell"><div><img src="${order.qr}" alt="QR-билет"><div class="ticket-code">${escHtml(id)}</div></div></div></div>`;
     status.textContent=`✓ QR-билет отправлен на ${email}`;
     toast("QR-билет отправлен на e-mail");
   }catch(e){
@@ -400,7 +400,7 @@ function escHtml(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<"
 function openTicket(code){
  const o=orders.find(x=>(x.code||String(x.id))===code);if(!o){toast("Билет не найден");return}
  const qr=o.qr||`/api/ticket/${encodeURIComponent(code)}/qr`;
- document.getElementById("ticketModalContent").innerHTML=`<span class="ticket-status">● БИЛЕТ ДЕЙСТВИТЕЛЕН</span><h2>${escHtml(o.movie)}</h2><p style="color:#aaa">${escHtml(o.cinema)}</p><div class="ticket-modal-grid"><div><p><small style="color:#777">ДАТА И ВРЕМЯ</small><br><b>${new Date(o.date).toLocaleDateString("ru-RU")} · ${escHtml(o.time)}</b></p><p><small style="color:#777">МЕСТА</small><br><b>${escHtml(o.seats.join(", "))}</b></p><p><small style="color:#777">КОД БИЛЕТА</small><br><span class="ticket-code">${escHtml(code)}</span></p><p style="color:#888;font-size:13px">Покажите этот QR-код при входе.</p></div><div class="ticket-modal-qr"><img src="${qr}" alt="QR-код билета"></div></div>`;
+ document.getElementById("ticketModalContent").innerHTML=`<div style="text-align:center"><span class="ticket-status">● БИЛЕТ АКТИВЕН</span><h2 style="margin:14px 0 6px">${escHtml(o.movie)}</h2><p style="color:#aaa;margin:0 0 18px">${escHtml(o.cinema)}</p><div class="ticket-modal-qr" style="margin:0 auto 16px"><img src="${qr}" alt="QR-код билета"></div><p style="margin:8px 0"><b>${new Date(o.date).toLocaleDateString("ru-RU")} · ${escHtml(o.time)}</b></p><p style="color:#aaa;margin:6px 0">Места: <b>${escHtml(o.seats.join(", "))}</b></p><div class="ticket-code">${escHtml(code)}</div></div>`;
  document.getElementById("ticketModal").classList.add("open");
 }
 function closeTicket(){document.getElementById("ticketModal").classList.remove("open")}
@@ -473,7 +473,66 @@ function enhanceMovieRows(){
 }
 renderRows();renderCinemas();renderBookingSelects();renderDates();renderTimes();renderSeats();renderOrders();enhanceMovieRows();
 
+// Language selector: keep the language controls themselves untranslated.
+function googleTranslateElementInit(){
+  new google.translate.TranslateElement({pageLanguage:"ru", includedLanguages:"ru,et,en", autoDisplay:false, multilanguagePage:true},"google_translate_element");
+  // Google Translate creates its selector asynchronously; apply saved choice when ready.
+  let tries=0;
+  const waitForSelector=()=>{
+    const select=document.querySelector(".goog-te-combo");
+    if(select){applySavedLanguage();return;}
+    if(tries++<40)setTimeout(waitForSelector,150);
+  };
+  waitForSelector();
+}
+function selectedSiteLanguage(){
+  const saved=localStorage.getItem("streamly-language");
+  if(saved&&["ru","et","en"].includes(saved))return saved;
+  const match=document.cookie.match(/(?:^|;\s*)googtrans=([^;]+)/);
+  if(match){const parts=decodeURIComponent(match[1]).split("/");if(parts.length>2&&["ru","et","en"].includes(parts[2]))return parts[2];}
+  return "ru";
+}
+function updateLanguageButtons(lang){
+  document.querySelectorAll(".language-switch button").forEach(b=>{
+    const active=b.dataset.lang===lang;
+    b.classList.toggle("active",active);
+    b.setAttribute("aria-pressed",String(active));
+  });
+}
+function applySavedLanguage(){
+  const lang=selectedSiteLanguage();
+  updateLanguageButtons(lang);
+  const select=document.querySelector(".goog-te-combo");
+  if(select&&select.value!==lang){select.value=lang;select.dispatchEvent(new Event("change",{bubbles:true}));}
+}
+function setSiteLanguage(lang){
+  if(!["ru","et","en"].includes(lang))return;
+  localStorage.setItem("streamly-language",lang);
+  updateLanguageButtons(lang);
+  // Google Translate expects /source/target in this cookie.
+  const cookieValue=`/ru/${lang}`;
+  document.cookie=`googtrans=${cookieValue};path=/;max-age=31536000;SameSite=Lax`;
+  if(location.hostname&&location.hostname!=="localhost"){
+    document.cookie=`googtrans=${cookieValue};path=/;domain=${location.hostname};max-age=31536000;SameSite=Lax`;
+  }
+  const select=document.querySelector(".goog-te-combo");
+  if(select){select.value=lang;select.dispatchEvent(new Event("change",{bubbles:true}));}
+  else if(lang!=="ru"){
+    // The Google widget may still be loading; retry briefly without reloading the page.
+    let tries=0;
+    const applyWhenReady=()=>{const combo=document.querySelector(".goog-te-combo");if(combo){combo.value=lang;combo.dispatchEvent(new Event("change",{bubbles:true}));}else if(tries++<40)setTimeout(applyWhenReady,150);};
+    applyWhenReady();
+  }else{
+    // Returning to the original language is handled by the same Google Translate selector.
+    const combo=document.querySelector(".goog-te-combo");if(combo){combo.value="ru";combo.dispatchEvent(new Event("change",{bubbles:true}));}
+  }
+}
+window.setSiteLanguage=setSiteLanguage;
+window.googleTranslateElementInit=googleTranslateElementInit;
+
 const user=JSON.parse(localStorage.getItem("streamly-user")||"null");if(user)document.getElementById("userName").textContent=user.name;
+applySavedLanguage();
 </script>
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
 </body>
 </html>
