@@ -385,8 +385,13 @@ async function issueTicket(){
     renderOrders();
 
     document.getElementById("ticketPreview").innerHTML=`<div style="text-align:center"><small>STREAMLY PASS</small><h2>${escHtml(order.movie)}</h2><p>${escHtml(order.cinema)}<br>${new Date(order.date).toLocaleDateString("ru-RU")} · ${escHtml(order.time)}<br>Места: ${escHtml(order.seats.join(", "))}</p><div class="qr-shell"><div><img src="${order.qr}" alt="QR-билет"><div class="ticket-code">${escHtml(id)}</div></div></div></div>`;
-    status.textContent=`✓ QR-билет отправлен на ${email}`;
-    toast("QR-билет отправлен на e-mail");
+    if(data.emailSent){
+      status.textContent=`✓ Билет сохранён на сайте, а QR-код отправлен на ${email}`;
+      toast("QR-билет отправлен на e-mail");
+    }else{
+      status.textContent=`✓ Билет и QR-код доступны в «Мои билеты». ${data.emailError||"Письмо не отправлено — проверьте настройки почты на сервере."}`;
+      toast("Билет сохранён на сайте; e-mail не отправлен");
+    }
   }catch(e){
     console.error("Ошибка отправки билета:",e);
     status.textContent="Не удалось отправить QR-билет: "+(e.message||"ошибка сервера");
