@@ -42,30 +42,38 @@ section{padding:28px 44px 0}.row-title{font-size:22px;margin:0 0 15px}.row{displ
 /* Enhanced movie browsing */
 .row-wrap{position:relative}.row{cursor:grab;scroll-behavior:smooth;user-select:none}.row.dragging{cursor:grabbing;scroll-behavior:auto}.row-arrow{position:absolute;z-index:8;top:50%;transform:translateY(-50%);width:46px;height:46px;border:1px solid #555;border-radius:50%;background:rgba(10,10,12,.86);color:#fff;font-size:25px;cursor:pointer;backdrop-filter:blur(12px);box-shadow:0 10px 30px #000}.row-arrow:hover{background:#fff;color:#000}.row-arrow.left{left:-18px}.row-arrow.right{right:-18px}.trailer-link{display:inline-flex;align-items:center;gap:8px;margin-top:12px;color:#fff;text-decoration:none;background:#2a2a2d;border:1px solid #444;padding:10px 14px;border-radius:10px}.qr-shell{background:#fff;color:#111;border-radius:22px;padding:18px;display:grid;place-items:center;position:relative;overflow:hidden;border:8px solid #111}.qr-shell:before,.qr-shell:after{content:"";position:absolute;width:54px;height:54px;border-radius:50%;background:#151517}.qr-shell:before{left:-34px;top:50%}.qr-shell:after{right:-34px;top:50%}.qr-shell img{width:190px;height:190px;border-radius:10px}.qr-brand{font-weight:900;letter-spacing:.18em;font-size:11px;margin-bottom:10px}.email-status{margin-top:12px;padding:12px;border-radius:12px;background:#0d0d0f;color:#bbb;font-size:13px}.ticket-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em}.free-badge{display:inline-block;background:#111;color:#fff;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800}.poster-note{font-size:12px;color:#777;margin-top:10px}
 
-.ticket-open-btn{margin-top:8px}.ticket-modal-card{width:min(620px,100%);background:#101012;border:1px solid #333;border-radius:24px;padding:26px;position:relative}.ticket-modal-card h2{margin:8px 0}.ticket-modal-grid{display:grid;grid-template-columns:1fr 230px;gap:24px;align-items:center}.ticket-modal-qr{background:#fff;border-radius:18px;padding:12px;width:230px;height:230px}.ticket-modal-qr img{width:100%;height:100%;display:block}.ticket-status{display:inline-block;background:#dff7e7;color:#14532d;padding:7px 10px;border-radius:999px;font-weight:800;font-size:12px}.trailer-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}.trailer-head b{font-size:16px}.trailer-external{color:#fff;text-decoration:none;border:1px solid #555;padding:8px 11px;border-radius:9px;font-size:13px}@media(max-width:620px){.ticket-modal-grid{grid-template-columns:1fr}.ticket-modal-qr{width:100%;height:auto;aspect-ratio:1}}
+.ticket-open-btn{margin-top:8px}.ticket-modal-card{width:min(620px,100%);background:#f7f9fc;color:#17191d;border:1px solid #d9dee7;border-radius:24px;padding:26px;position:relative;box-shadow:0 25px 70px #0005}.ticket-modal-card h2{margin:8px 0;color:#17191d}.ticket-modal-card p{color:#525b69!important}.ticket-modal-card .ticket-code{background:#edf1f7;color:#303847;border-color:#aab4c5}.ticket-modal-grid{display:grid;grid-template-columns:1fr 230px;gap:24px;align-items:center}.ticket-modal-qr{background:#fff;border-radius:18px;padding:12px;width:230px;height:230px}.ticket-modal-qr img{width:100%;height:100%;display:block}.ticket-status{display:inline-block;background:#dff7e7;color:#14532d;padding:7px 10px;border-radius:999px;font-weight:800;font-size:12px}.trailer-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}.trailer-head b{font-size:16px}.trailer-external{color:#fff;text-decoration:none;border:1px solid #555;padding:8px 11px;border-radius:9px;font-size:13px}@media(max-width:620px){.ticket-modal-grid{grid-template-columns:1fr}.ticket-modal-qr{width:100%;height:auto;aspect-ratio:1}}
 
 /* Language switcher */
-.language-switch{position:fixed;right:25px;top:68px;z-index:45;display:flex;gap:5px;padding:5px;border:1px solid #333;border-radius:14px;background:rgba(15,15,15,.92);backdrop-filter:blur(18px)}
-.language-switch button{border:0;background:transparent;color:#aaa;padding:7px 11px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer}
-.language-switch button.active,.language-switch button:hover{background:#fff;color:#080808}
+.language-switch{position:fixed;right:25px;top:76px;z-index:45;display:block;min-width:150px;font-size:13px}
+.language-current{width:100%;display:flex;justify-content:space-between;align-items:center;gap:18px;border:1px solid #444;background:rgba(15,15,15,.94);color:#fff;padding:11px 14px;border-radius:13px;font-weight:800;cursor:pointer;backdrop-filter:blur(18px);box-shadow:0 8px 24px #0005}
+.language-options{display:none;margin-top:6px;padding:5px;border:1px solid #333;border-radius:13px;background:rgba(15,15,15,.97);backdrop-filter:blur(18px);box-shadow:0 12px 30px #0007}
+.language-switch.open .language-options{display:grid;gap:3px}
+.language-options button{width:100%;display:flex;align-items:center;gap:9px;text-align:left;border:0;background:transparent;color:#ddd;padding:10px 11px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer}
+.language-options button:hover,.language-options button.active{background:#fff;color:#080808}
+.language-options .lang-check{margin-left:auto}
+.language-switch button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .goog-te-banner-frame,.goog-te-gadget,.goog-te-balloon-frame{display:none!important}
 body{top:0!important}.skiptranslate{display:none!important}
-.ticket{position:relative;overflow:hidden;background:radial-gradient(ellipse at 100% 0%,rgba(255,255,255,.12),transparent 42%),linear-gradient(145deg,#202020,#0c0c0c 70%);border:1px solid #454545!important;border-radius:22px!important;padding:28px!important;box-shadow:0 18px 55px #0008}
-.ticket:before{content:"";position:absolute;left:-1px;top:0;bottom:0;width:4px;background:linear-gradient(#fff,#777)}
-.ticket small{letter-spacing:.22em;color:#aaa;font-weight:800}
-.ticket h2{font-size:27px;letter-spacing:-.03em}
+.ticket{position:relative;overflow:hidden;background:linear-gradient(145deg,#fff,#f0f3f7 75%);color:#17191d;border:1px solid #d9dee7!important;border-radius:22px!important;padding:28px!important;box-shadow:0 18px 45px #0002}
+.ticket:before{content:"";position:absolute;left:-1px;top:0;bottom:0;width:5px;background:linear-gradient(#7c9cff,#a8e4d1)}
+.ticket small{letter-spacing:.22em;color:#626a78;font-weight:800}
+.ticket h2{font-size:27px;letter-spacing:-.03em;color:#17191d}
+.ticket p{color:#555d6b}
+.ticket .qr-shell{background:#fff;color:#111;border:2px solid #e1e5ed;box-shadow:0 8px 25px #24324a18}
+.ticket .ticket-code{background:#edf1f7;border:1px dashed #aab4c5;color:#303847}
 .qr-shell{display:inline-flex;padding:14px;background:#fff;border-radius:18px;box-shadow:0 8px 35px #0008}
 .qr-shell img{display:block;width:190px;height:190px;object-fit:contain}
 .ticket-code{display:inline-block;font-family:ui-monospace,monospace;letter-spacing:.1em;background:#242424;border:1px dashed #666;padding:7px 10px;border-radius:8px;margin-top:8px}
 .ticket-modal-qr{background:#fff;border-radius:18px;padding:12px;align-self:center}
 .ticket-modal-qr img{display:block;width:180px;height:180px}
-@media(max-width:700px){.language-switch{right:12px;top:62px}.search{right:12px;top:14px}.search input{width:155px}.hero-user{top:110px}}
+@media(max-width:700px){.language-switch{right:12px;top:62px;min-width:140px}.search{right:12px;top:14px}.search input{width:155px}.hero-user{top:110px}}
 </style>
 </head>
 <body>
 <div class="app">
 <aside>
-  <div class="logo"> <span>Streamly</span></div>
+  <div class="logo notranslate" translate="no"> <span class="notranslate" translate="no">Streamly</span></div>
   <nav>
     <button class="active" data-section="home">⌂ &nbsp; Главная</button>
     <button data-section="movies">▶ &nbsp; Фильмы</button>
@@ -78,10 +86,13 @@ body{top:0!important}.skiptranslate{display:none!important}
 
 <main>
   <div class="search"><input id="search" placeholder="Поиск фильма"></div>
-  <div class="language-switch notranslate" translate="no" aria-label="Website language">
-    <button type="button" class="notranslate active" translate="no" data-lang="ru" onclick="setSiteLanguage('ru')">RU</button>
-    <button type="button" class="notranslate" translate="no" data-lang="et" onclick="setSiteLanguage('et')">ET</button>
-    <button type="button" class="notranslate" translate="no" data-lang="en" onclick="setSiteLanguage('en')">EN</button>
+  <div class="language-switch notranslate" translate="no" aria-label="Выбор языка" id="languageSwitch">
+    <button type="button" class="language-current notranslate" translate="no" aria-expanded="false" aria-controls="languageOptions" onclick="toggleLanguageMenu()"><span id="currentLanguageLabel">🇷🇺 Русский</span><span aria-hidden="true">⌄</span></button>
+    <div class="language-options" id="languageOptions" role="menu">
+      <button type="button" class="notranslate active" translate="no" data-lang="ru" role="menuitem" onclick="setSiteLanguage('ru')">🇷🇺 Русский <span class="lang-check">✓</span></button>
+      <button type="button" class="notranslate" translate="no" data-lang="et" role="menuitem" onclick="setSiteLanguage('et')">🇪🇪 Eesti <span class="lang-check"></span></button>
+      <button type="button" class="notranslate" translate="no" data-lang="en" role="menuitem" onclick="setSiteLanguage('en')">🇬🇧 English <span class="lang-check"></span></button>
+    </div>
   </div>
   <div id="google_translate_element" style="display:none"></div>
 
@@ -497,11 +508,20 @@ function selectedSiteLanguage(){
   if(match){const parts=decodeURIComponent(match[1]).split("/");if(parts.length>2&&["ru","et","en"].includes(parts[2]))return parts[2];}
   return "ru";
 }
+function toggleLanguageMenu(force){
+  const wrap=document.getElementById("languageSwitch");
+  const open=typeof force==="boolean"?force:!wrap.classList.contains("open");
+  wrap.classList.toggle("open",open);
+  wrap.querySelector(".language-current").setAttribute("aria-expanded",String(open));
+}
 function updateLanguageButtons(lang){
-  document.querySelectorAll(".language-switch button").forEach(b=>{
+  const labels={ru:"🇷🇺 Русский",et:"🇪🇪 Eesti",en:"🇬🇧 English"};
+  document.getElementById("currentLanguageLabel").textContent=labels[lang]||labels.ru;
+  document.querySelectorAll(".language-options [data-lang]").forEach(b=>{
     const active=b.dataset.lang===lang;
     b.classList.toggle("active",active);
     b.setAttribute("aria-pressed",String(active));
+    b.querySelector(".lang-check").textContent=active?"✓":"";
   });
 }
 function applySavedLanguage(){
@@ -514,6 +534,7 @@ function setSiteLanguage(lang){
   if(!["ru","et","en"].includes(lang))return;
   localStorage.setItem("streamly-language",lang);
   updateLanguageButtons(lang);
+  toggleLanguageMenu(false);
   // Google Translate expects /source/target in this cookie.
   const cookieValue=`/ru/${lang}`;
   document.cookie=`googtrans=${cookieValue};path=/;max-age=31536000;SameSite=Lax`;
@@ -533,6 +554,7 @@ function setSiteLanguage(lang){
   }
 }
 window.setSiteLanguage=setSiteLanguage;
+window.toggleLanguageMenu=toggleLanguageMenu;
 window.googleTranslateElementInit=googleTranslateElementInit;
 
 const user=JSON.parse(localStorage.getItem("streamly-user")||"null");if(user)document.getElementById("userName").textContent=user.name;
