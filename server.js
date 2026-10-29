@@ -85,10 +85,10 @@ app.get("/ticket/:id",(req,res)=>{
  const t=tickets.get(req.params.id);
  if(!t)return res.status(404).send("<h1>Билет не найден</h1>");
  res.send(`<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Streamly Pass</title>
- <body style="margin:0;background:#090909;color:#fff;font-family:Arial;display:grid;min-height:100vh;place-items:center"><main style="width:min(520px,90%);background:#171717;border:1px solid #333;border-radius:22px;padding:28px;text-align:center">
+ <body style="margin:0;background:#090909;color:#fff;font-family:Arial;display:grid;min-height:100vh;place-items:center"><main style="width:min(520px,90%);background:radial-gradient(ellipse at 100% 0%,#333,transparent 45%),linear-gradient(145deg,#202020,#0c0c0c);border:1px solid #454545;border-radius:24px;padding:30px;text-align:center;box-shadow:0 24px 80px #0009">
  <div style="letter-spacing:.18em;color:#aaa;font-size:12px">STREAMLY PASS</div><h1>${esc(t.movie)}</h1>
  <p>${esc(t.cinema)}<br>${esc(t.date)} · ${esc(t.time)}<br>Места: <b>${esc(t.seats.join(", "))}</b></p>
- <img src="/api/ticket/${encodeURIComponent(t.id)}/qr" style="width:260px;max-width:90%;background:#fff;padding:12px;border-radius:16px"><p>Код: <b>${esc(t.id)}</b></p>
+ <img src="/api/ticket/${encodeURIComponent(t.id)}/qr" style="width:260px;max-width:90%;background:#fff;padding:14px;border-radius:18px;box-shadow:0 10px 35px #0008"><p>Код: <b>${esc(t.id)}</b></p>
  </main></body></html>`);
 });
 
