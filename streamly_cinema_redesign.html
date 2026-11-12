@@ -18,7 +18,7 @@ main{margin-left:235px;width:calc(100% - 235px);padding-bottom:50px}
 .hero-content{position:absolute;left:60px;bottom:70px;max-width:560px}.eyebrow{color:#bbb;font-size:14px}.hero h1{font-size:56px;line-height:1;margin:10px 0}.hero p{color:#d0d0d0;line-height:1.55}.actions{display:flex;gap:10px;margin-top:22px}
 .primary,.secondary,.btn{border:0;border-radius:10px;padding:12px 20px;font-weight:650;cursor:pointer}.primary{background:#fff;color:#000}.secondary,.btn.dark{background:#292929;color:#fff}
 section{padding:28px 44px 0}.row-title{font-size:22px;margin:0 0 15px}.row{display:flex;gap:16px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none}.row::-webkit-scrollbar{display:none}
-.card{flex:0 0 205px;height:290px;border-radius:12px;overflow:hidden;position:relative;background:#161616;cursor:pointer;transition:.2s;border:1px solid transparent}.card:hover{transform:scale(1.035);border-color:#444}.card.selected{outline:2px solid #fff}
+.card{flex:0 0 205px;height:290px;border-radius:12px;overflow:hidden;position:relative;background:#161616;cursor:pointer;transition:.2s;border:1px solid transparent}.card:hover{transform:scale(1.035);border-color:#444}.card:focus-visible{outline:2px solid #fff;outline-offset:3px}.card.poster-fallback{background:#15171c}.card.selected{outline:2px solid #fff}
 .card img{width:100%;height:100%;object-fit:cover}.shade{position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.9),transparent 45%)}.meta{position:absolute;bottom:12px;left:12px;right:10px}.meta b{display:block;font-size:16px}.meta small{color:#bbb}.movie-rating{display:inline-flex;align-items:center;gap:4px;color:#ffd166;font-size:12px;font-weight:800;margin-bottom:5px}.rating-note{color:#999;font-size:12px;margin-top:7px}.recommend-note{color:#aaa;font-size:13px;margin:-7px 0 14px}
 .hero-user{position:absolute;right:28px;top:75px;display:flex;align-items:center;gap:10px;z-index:2}.hero-user .name{color:#bbb;font-size:14px}
 .booking{margin-top:10px;background:#111;border:1px solid #242424;border-radius:18px;padding:25px}
@@ -316,9 +316,15 @@ function getRecommendedMovies(){
  for(const m of pool){if(result.length===8)break;if(!result.includes(m))result.push(m);}
  return result;
 }
+function posterFallback(img){
+ const title=img.alt||"STREAMLY";
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="500" height="750" viewBox="0 0 500 750"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#30343d"/><stop offset="1" stop-color="#090a0d"/></linearGradient></defs><rect width="500" height="750" fill="url(#g)"/><path d="M0 520 500 260V750H0" fill="#ffffff" opacity=".05"/><text x="250" y="340" fill="#fff" font-family="Arial,sans-serif" font-size="28" font-weight="700" text-anchor="middle">STREAMLY CINEMA</text><text x="250" y="390" fill="#aaa" font-family="Arial,sans-serif" font-size="17" text-anchor="middle">POSTER UNAVAILABLE</text></svg>`;
+ img.onerror=null;img.src="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(svg);img.classList.add("poster-fallback");
+}
 function movieCard(m){
- const safe=m.name.replace(/'/g,"\\'");
- return `<div class="card ${state.movie?.name===m.name?'selected':''}" data-name="${m.name.toLowerCase()}" onclick="openMovieInfo('${safe}')"><img src="${m.img}" alt="${m.name}"><div class="shade"></div><div class="meta"><span class="movie-rating">★ ${movieRating(m).toFixed(1)} <span style="color:#aaa;font-weight:500">/ 10</span></span><b>${m.name}</b><small>${m.year} · ${m.genre}</small></div></div>`;
+ const safe=m.name.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+ const title=escHtml(m.name),genre=escHtml(m.genre),year=escHtml(m.year);
+ return `<div class="card ${state.movie?.name===m.name?'selected':''}" data-name="${title.toLowerCase()}" role="button" tabindex="0" aria-label="Открыть фильм ${title}" onclick="openMovieInfo('${safe}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openMovieInfo('${safe}')}"><img loading="lazy" decoding="async" src="${m.img}" alt="${title}" onerror="posterFallback(this)"><div class="shade"></div><div class="meta"><span class="movie-rating">★ ${movieRating(m).toFixed(1)} <span style="color:#aaa;font-weight:500">/ 10</span></span><b>${title}</b><small>${year} · ${genre}</small></div></div>`;
 }
 function renderRows(){
  document.getElementById("popular").innerHTML=movies.slice(-8).map(movieCard).join("");
