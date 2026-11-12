@@ -19,7 +19,7 @@ main{margin-left:235px;width:calc(100% - 235px);padding-bottom:50px}
 .primary,.secondary,.btn{border:0;border-radius:10px;padding:12px 20px;font-weight:650;cursor:pointer}.primary{background:#fff;color:#000}.secondary,.btn.dark{background:#292929;color:#fff}
 section{padding:28px 44px 0}.row-title{font-size:22px;margin:0 0 15px}.row{display:flex;gap:16px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none}.row::-webkit-scrollbar{display:none}
 .card{flex:0 0 205px;height:290px;border-radius:12px;overflow:hidden;position:relative;background:#161616;cursor:pointer;transition:.2s;border:1px solid transparent}.card:hover{transform:scale(1.035);border-color:#444}.card.selected{outline:2px solid #fff}
-.card img{width:100%;height:100%;object-fit:cover}.shade{position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.9),transparent 45%)}.meta{position:absolute;bottom:12px;left:12px;right:10px}.meta b{display:block;font-size:16px}.meta small{color:#bbb}
+.card img{width:100%;height:100%;object-fit:cover}.shade{position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.9),transparent 45%)}.meta{position:absolute;bottom:12px;left:12px;right:10px}.meta b{display:block;font-size:16px}.meta small{color:#bbb}.movie-rating{display:inline-flex;align-items:center;gap:4px;color:#ffd166;font-size:12px;font-weight:800;margin-bottom:5px}.rating-note{color:#999;font-size:12px;margin-top:7px}.recommend-note{color:#aaa;font-size:13px;margin:-7px 0 14px}
 .hero-user{position:absolute;right:28px;top:75px;display:flex;align-items:center;gap:10px;z-index:2}.hero-user .name{color:#bbb;font-size:14px}
 .booking{margin-top:10px;background:#111;border:1px solid #242424;border-radius:18px;padding:25px}
 .booking-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:25px}.booking-head h1{font-size:30px;margin:0 0 6px}.subtitle{color:#999;margin:0}
@@ -111,6 +111,7 @@ body{top:0!important}.skiptranslate{display:none!important}
 
   <section id="home">
     <h2 class="row-title">Популярное</h2><div class="row" id="popular"></div>
+    <h2 class="row-title">Рекомендации Streamly</h2><p class="recommend-note">Подборка формируется автоматически по рейтингу и разнообразию жанров.</p><div class="row" id="recommendations"></div>
     <h2 class="row-title">Фильмы 2000–2010</h2><div class="row" id="classic1"></div>
     <h2 class="row-title">Фильмы 2011–2020</h2><div class="row" id="classic2"></div>
   </section>
@@ -189,7 +190,7 @@ body{top:0!important}.skiptranslate{display:none!important}
           <p id="movieInfoMeta"></p>
           <h3 style="margin:18px 0 6px">О чём фильм</h3>
           <p id="movieInfoDesc" style="font-size:16px;color:#ddd"></p>
-          <p id="movieInfoCast" style="font-size:15px"></p>
+          <p id="movieInfoCast" style="font-size:15px"></p><p class="rating-note">★ Рейтинг Streamly — автоматически сгенерированная оценка для каталога, не пользовательское голосование.</p>
         </div>
       </div>
     </div>
@@ -272,6 +273,18 @@ const movies=[
 {name:"Барби",year:"2023",genre:"Комедия · Фэнтези",price:10,img:"https://image.tmdb.org/t/p/w500/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg",desc:"Барби покидает идеальный Барбиленд и отправляется в реальный мир, чтобы понять причину неожиданных перемен в своей жизни.",cast:"Марго Робби · Райан Гослинг · Америка Феррера",trailer:"https://www.youtube.com/results?search_query=Barbie+2023+official+trailer"},
 {name:"Дюна: Часть вторая",year:"2024",genre:"Фантастика · Приключение",price:12,img:"https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg",desc:"Пол Атрейдес объединяется с Чани и фременами, стремясь отомстить заговорщикам, уничтожившим его семью, и предотвратить страшное будущее.",cast:"Тимоти Шаламе · Зендея · Ребекка Фергюсон",trailer:"https://www.youtube.com/results?search_query=Dune+Part+Two+official+trailer"},
 {name:"Довод",year:"2020",genre:"Фантастика · Экшен · Триллер",price:10.5,img:"https://image.tmdb.org/t/p/w500/k68nPLbIST6NP96JmTxmZijEvCA.jpg",desc:"Агент получает загадочную технологию, позволяющую манипулировать направлением времени. Ему предстоит предотвратить глобальную катастрофу.",cast:"Джон Дэвид Вашингтон · Роберт Паттинсон · Элизабет Дебики",trailer:"https://www.youtube.com/results?search_query=Tenet+2020+official+trailer"}
+,
+{name:"Оппенгеймер",year:"2023",genre:"Драма · История",price:11,img:"https://image.tmdb.org/t/p/w500/ptpr0kGAckfQkJeJIt8st5dglvd.jpg",desc:"История учёного Роберта Оппенгеймера и команды, работавшей над Манхэттенским проектом. Фильм исследует научные амбиции, ответственность и последствия исторических решений.",cast:"Киллиан Мёрфи · Эмили Блант · Роберт Дауни-мл.",trailer:"https://www.youtube.com/results?search_query=Oppenheimer+official+trailer"},
+{name:"Человек-паук: Через вселенные",year:"2018",genre:"Анимация · Экшен · Фантастика",price:9,img:"https://image.tmdb.org/t/p/w500/iiZZdoQBEYBv6id8su7ImL0oCbD.jpg",desc:"Майлз Моралес открывает для себя мир альтернативных вселенных и встречает других людей-пауков. Вместе им предстоит остановить угрозу, способную разрушить реальности.",cast:"Шамейк Мур · Джейк Джонсон · Хейли Стайнфелд",trailer:"https://www.youtube.com/results?search_query=Spider-Man+Into+the+Spider-Verse+official+trailer"},
+{name:"Грань будущего",year:"2014",genre:"Фантастика · Экшен",price:9.5,img:"https://image.tmdb.org/t/p/w500/xjw5tr5g5Y3h6b6f8l2p9v7m4K.jpg",desc:"Военный офицер оказывается во временной петле и снова и снова переживает один и тот же бой. Каждая попытка приближает его к разгадке.",cast:"Том Круз · Эмили Блант · Билл Пэкстон",trailer:"https://www.youtube.com/results?search_query=Edge+of+Tomorrow+official+trailer"},
+{name:"Достать ножи",year:"2019",genre:"Детектив · Комедия · Драма",price:9.5,img:"https://image.tmdb.org/t/p/w500/pThyQovXQrw2m0s9x82twj48Jq4.jpg",desc:"После загадочной смерти известного писателя детектив Бенуа Блан начинает расследовать дело, в котором у каждого члена семьи есть свой секрет.",cast:"Дэниел Крейг · Ана де Армас · Крис Эванс",trailer:"https://www.youtube.com/results?search_query=Knives+Out+official+trailer"},
+{name:"Зелёная книга",year:"2018",genre:"Драма · Комедия",price:9,img:"https://image.tmdb.org/t/p/w500/7BsvSuDQuoqhWmU2fL7W2GOcZHU.jpg",desc:"Водитель и талантливый пианист отправляются в концертное турне по югу США. Дорога меняет их взгляды и постепенно превращает случайное знакомство в дружбу.",cast:"Вигго Мортенсен · Махершала Али · Линда Карделлини",trailer:"https://www.youtube.com/results?search_query=Green+Book+official+trailer"},
+{name:"Ла-Ла Ленд",year:"2016",genre:"Мюзикл · Драма · Мелодрама",price:9.5,img:"https://image.tmdb.org/t/p/w500/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg",desc:"Начинающая актриса и джазовый музыкант встречаются в Лос-Анджелесе. Их чувства и мечты проходят проверку амбициями и выбором собственного пути.",cast:"Райан Гослинг · Эмма Стоун · Джон Ледженд",trailer:"https://www.youtube.com/results?search_query=La+La+Land+official+trailer"},
+{name:"Человек-паук: Паутина вселенных",year:"2023",genre:"Анимация · Экшен · Фантастика",price:10,img:"https://image.tmdb.org/t/p/w500/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg",desc:"Майлз снова отправляется в путешествие по мультивселенной и сталкивается с большим сообществом героев-пауков, у каждого из которых своё представление о судьбе.",cast:"Шамейк Мур · Хейли Стайнфелд · Оскар Айзек",trailer:"https://www.youtube.com/results?search_query=Across+the+Spider-Verse+official+trailer"},
+{name:"Паддингтон 2",year:"2017",genre:"Комедия · Семейный · Приключение",price:8.5,img:"https://image.tmdb.org/t/p/w500/1OJ9vkD5xPt3L2b6bA7n0v1h3z.jpg",desc:"Медвежонок Паддингтон хочет сделать особенный подарок тёте Люси, но редкая книга неожиданно втягивает его в запутанное приключение.",cast:"Бен Уишоу · Хью Бонневилль · Салли Хокинс",trailer:"https://www.youtube.com/results?search_query=Paddington+2+official+trailer"},
+{name:"Достать ножи: Стеклянная луковица",year:"2022",genre:"Детектив · Комедия",price:9,img:"https://image.tmdb.org/t/p/w500/vDGr1YdrlfbU9DkB2R7fQ8zZ4z.jpg",desc:"Детектив Бенуа Блан приезжает на частный остров, где компания друзей оказывается в центре новой загадки. Никто не рассказывает всю правду.",cast:"Дэниел Крейг · Эдвард Нортон · Жанель Монэ",trailer:"https://www.youtube.com/results?search_query=Glass+Onion+official+trailer"},
+{name:"Марсианин",year:"2015",genre:"Фантастика · Приключение · Драма",price:10,img:"https://image.tmdb.org/t/p/w500/5aGhaIHilmxQOgAAx0tI7d2BvOb.jpg",desc:"Астронавт остаётся один на Марсе и использует знания, находчивость и чувство юмора, чтобы продержаться до возможного спасения.",cast:"Мэтт Дэймон · Джессика Честейн · Чиветел Эджиофор",trailer:"https://www.youtube.com/results?search_query=The+Martian+official+trailer"}
+
 ];
 const cinemas=[
 {name:"CINEMA CITY",address:"Kesklinna, Tallinn",rooms:"Залы 1–8"},
@@ -284,12 +297,32 @@ const cinemas=[
 let state={movie:null,cinema:null,date:null,time:null,seats:[]};
 let orders=JSON.parse(localStorage.getItem("streamly-orders")||"[]");
 
+
+// Оценки создаются детерминированно: у каждого фильма постоянный рейтинг 7.2–9.7.
+function movieRating(movie){
+ if(Number.isFinite(movie.rating)) return movie.rating;
+ let hash=0; for(const ch of movie.name) hash=(hash*31+ch.charCodeAt(0))>>>0;
+ return Math.round((7.2+(hash%251)/100)*10)/10;
+}
+function getRecommendedMovies(){
+ const usedGenres=new Set(), pool=[...movies].sort((a,b)=>movieRating(b)-movieRating(a));
+ const result=[];
+ // Сначала выбираем фильмы разных жанров, затем заполняем подборку лучшими оценками.
+ for(const m of pool){
+   const mainGenre=(m.genre||"").split(" · ")[0];
+   if(!usedGenres.has(mainGenre)){result.push(m);usedGenres.add(mainGenre);}
+   if(result.length===8)break;
+ }
+ for(const m of pool){if(result.length===8)break;if(!result.includes(m))result.push(m);}
+ return result;
+}
 function movieCard(m){
  const safe=m.name.replace(/'/g,"\\'");
- return `<div class="card ${state.movie?.name===m.name?'selected':''}" data-name="${m.name.toLowerCase()}" onclick="openMovieInfo('${safe}')"><img src="${m.img}" alt="${m.name}"><div class="shade"></div><div class="meta"><b>${m.name}</b><small>${m.year} · ${m.genre}</small></div></div>`;
+ return `<div class="card ${state.movie?.name===m.name?'selected':''}" data-name="${m.name.toLowerCase()}" onclick="openMovieInfo('${safe}')"><img src="${m.img}" alt="${m.name}"><div class="shade"></div><div class="meta"><span class="movie-rating">★ ${movieRating(m).toFixed(1)} <span style="color:#aaa;font-weight:500">/ 10</span></span><b>${m.name}</b><small>${m.year} · ${m.genre}</small></div></div>`;
 }
 function renderRows(){
  document.getElementById("popular").innerHTML=movies.slice(-8).map(movieCard).join("");
+ document.getElementById("recommendations").innerHTML=getRecommendedMovies().map(movieCard).join("");
  document.getElementById("classic1").innerHTML=movies.filter(m=>+m.year<=2010).map(movieCard).join("");
  document.getElementById("classic2").innerHTML=movies.filter(m=>+m.year>=2011).map(movieCard).join("");
  document.getElementById("allMovies").innerHTML=movies.map(movieCard).join("");
@@ -437,7 +470,7 @@ function show(id,btn){
 function openMovieInfo(name){
  const m=movies.find(x=>x.name===name);if(!m)return;
  document.getElementById("movieInfoTitle").textContent=m.name;
- document.getElementById("movieInfoMeta").textContent=`${m.year} · ${m.genre} · €${m.price.toFixed(2)}`;
+ document.getElementById("movieInfoMeta").textContent=`${m.year} · ${m.genre} · €${m.price.toFixed(2)} · ★ ${movieRating(m).toFixed(1)}/10`;
  document.getElementById("movieInfoDesc").textContent=m.desc;
  document.getElementById("movieInfoCast").innerHTML="<b>В ролях:</b> "+m.cast;
  document.getElementById("moviePoster").src=m.img;
