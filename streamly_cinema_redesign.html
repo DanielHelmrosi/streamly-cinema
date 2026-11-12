@@ -33,7 +33,7 @@ section{padding:28px 44px 0}.row-title{font-size:22px;margin:0 0 15px}.row{displ
 .legend{display:flex;justify-content:center;gap:18px;color:#999;font-size:12px;margin-top:18px}.legend span{display:flex;align-items:center;gap:6px}.dot{width:13px;height:13px;border-radius:4px;background:#303030}.dot.sel{background:#fff}.dot.occ{background:#555}
 .summary{margin-top:18px;padding:18px;border-radius:12px;background:#181818;display:flex;justify-content:space-between;align-items:center;gap:20px}.summary p{margin:4px 0;color:#999}.total{font-size:24px;font-weight:700}
 .empty{color:#777;padding:25px 0}
-.modal{display:none;position:fixed;z-index:100;inset:0;background:rgba(0,0,0,.78);align-items:center;justify-content:center;padding:20px}.modal.open{display:flex}.dialog{width:min(900px,100%);background:#171717;border-radius:18px;overflow:hidden;box-shadow:0 25px 80px #000;border:1px solid #333}.trailer-box{position:relative;background:#000}.trailer-box iframe{width:100%;aspect-ratio:16/9;border:0;display:block}.movie-body{padding:25px}.movie-info{display:flex;gap:20px;align-items:flex-start}.movie-poster{width:150px;height:215px;object-fit:cover;border-radius:10px}.dialog h2{font-size:30px;margin:0 0 8px}.dialog p{color:#bbb;line-height:1.6}.close{position:absolute;right:14px;top:14px;background:#333;color:#fff;border:0;border-radius:50%;width:40px;height:40px;cursor:pointer;font-size:20px}.dialog-actions{display:flex;gap:10px;margin-top:18px}
+.modal{display:none;position:fixed;z-index:100;inset:0;background:rgba(0,0,0,.78);align-items:center;justify-content:center;padding:20px}.modal.open{display:flex}.dialog{width:min(900px,100%);max-height:calc(100vh - 40px);overflow-y:auto;position:relative;background:#171717;border-radius:18px;overflow:hidden;box-shadow:0 25px 80px #000;border:1px solid #333}.trailer-box{position:relative;background:#000}.trailer-box iframe{width:100%;aspect-ratio:16/9;border:0;display:block}.movie-body{padding:25px}.movie-info{display:flex;gap:20px;align-items:flex-start}.movie-poster{width:150px;height:215px;object-fit:cover;border-radius:10px}.dialog h2{font-size:30px;margin:0 0 8px}.dialog p{color:#bbb;line-height:1.6}.close{position:absolute;right:14px;top:14px;background:#333;color:#fff;border:0;border-radius:50%;width:40px;height:40px;cursor:pointer;font-size:20px}.dialog-actions{display:flex;gap:10px;margin-top:18px}
 .register-dialog{width:min(460px,100%);padding:25px}.register-dialog input{width:100%;margin:7px 0;background:#111;border:1px solid #3a3a3a;color:#fff;padding:12px;border-radius:9px}.register-dialog .actions{display:flex;gap:9px;margin-top:12px}
 .toast{position:fixed;bottom:25px;right:25px;background:#fff;color:#000;padding:12px 16px;border-radius:10px;display:none;z-index:110}
 @media(max-width:900px){aside{width:72px;padding:18px 8px}.logo{font-size:0;text-align:center}.logo:first-letter{font-size:25px}nav button{font-size:0;text-align:center}nav button:first-letter{font-size:20px}main{margin-left:72px;width:calc(100% - 72px)}.hero{height:480px}.hero-content{left:28px;right:20px}.hero h1{font-size:40px}section{padding:24px 20px}.search{right:12px}.search input{width:150px}.grid{grid-template-columns:1fr}.cinemas{grid-template-columns:1fr 1fr}.hero-user{right:15px}}
@@ -180,7 +180,7 @@ body{top:0!important}.skiptranslate{display:none!important}
 </main>
 </div>
 
-<div class="modal" id="movieModal">
+<div class="modal" id="movieModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="movieInfoTitle">
   <div class="dialog">
     <div class="movie-body" style="padding-bottom:18px">
       <div class="movie-info">
@@ -276,14 +276,14 @@ const movies=[
 ,
 {name:"Оппенгеймер",year:"2023",genre:"Драма · История",price:11,img:"https://image.tmdb.org/t/p/w500/ptpr0kGAckfQkJeJIt8st5dglvd.jpg",desc:"История учёного Роберта Оппенгеймера и команды, работавшей над Манхэттенским проектом. Фильм исследует научные амбиции, ответственность и последствия исторических решений.",cast:"Киллиан Мёрфи · Эмили Блант · Роберт Дауни-мл.",trailer:"https://www.youtube.com/results?search_query=Oppenheimer+official+trailer"},
 {name:"Человек-паук: Через вселенные",year:"2018",genre:"Анимация · Экшен · Фантастика",price:9,img:"https://image.tmdb.org/t/p/w500/iiZZdoQBEYBv6id8su7ImL0oCbD.jpg",desc:"Майлз Моралес открывает для себя мир альтернативных вселенных и встречает других людей-пауков. Вместе им предстоит остановить угрозу, способную разрушить реальности.",cast:"Шамейк Мур · Джейк Джонсон · Хейли Стайнфелд",trailer:"https://www.youtube.com/results?search_query=Spider-Man+Into+the+Spider-Verse+official+trailer"},
-{name:"Грань будущего",year:"2014",genre:"Фантастика · Экшен",price:9.5,img:"https://image.tmdb.org/t/p/w500/xjw5tr5g5Y3h6b6f8l2p9v7m4K.jpg",desc:"Военный офицер оказывается во временной петле и снова и снова переживает один и тот же бой. Каждая попытка приближает его к разгадке.",cast:"Том Круз · Эмили Блант · Билл Пэкстон",trailer:"https://www.youtube.com/results?search_query=Edge+of+Tomorrow+official+trailer"},
+{name:"Грань будущего",year:"2014",genre:"Фантастика · Экшен",price:9.5,img:"https://www.originalfilmart.co.uk/cdn/shop/files/EdgeofTomorrow_2014_adv_original_film_art_2a6a4b95-0896-4695-aa98-fc883f754917_5000x.webp?v=1705524338",desc:"Военный офицер оказывается во временной петле и снова и снова переживает один и тот же бой. Каждая попытка приближает его к разгадке.",cast:"Том Круз · Эмили Блант · Билл Пэкстон",trailer:"https://www.youtube.com/results?search_query=Edge+of+Tomorrow+official+trailer"},
 {name:"Достать ножи",year:"2019",genre:"Детектив · Комедия · Драма",price:9.5,img:"https://image.tmdb.org/t/p/w500/pThyQovXQrw2m0s9x82twj48Jq4.jpg",desc:"После загадочной смерти известного писателя детектив Бенуа Блан начинает расследовать дело, в котором у каждого члена семьи есть свой секрет.",cast:"Дэниел Крейг · Ана де Армас · Крис Эванс",trailer:"https://www.youtube.com/results?search_query=Knives+Out+official+trailer"},
 {name:"Зелёная книга",year:"2018",genre:"Драма · Комедия",price:9,img:"https://image.tmdb.org/t/p/w500/7BsvSuDQuoqhWmU2fL7W2GOcZHU.jpg",desc:"Водитель и талантливый пианист отправляются в концертное турне по югу США. Дорога меняет их взгляды и постепенно превращает случайное знакомство в дружбу.",cast:"Вигго Мортенсен · Махершала Али · Линда Карделлини",trailer:"https://www.youtube.com/results?search_query=Green+Book+official+trailer"},
 {name:"Ла-Ла Ленд",year:"2016",genre:"Мюзикл · Драма · Мелодрама",price:9.5,img:"https://image.tmdb.org/t/p/w500/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg",desc:"Начинающая актриса и джазовый музыкант встречаются в Лос-Анджелесе. Их чувства и мечты проходят проверку амбициями и выбором собственного пути.",cast:"Райан Гослинг · Эмма Стоун · Джон Ледженд",trailer:"https://www.youtube.com/results?search_query=La+La+Land+official+trailer"},
 {name:"Человек-паук: Паутина вселенных",year:"2023",genre:"Анимация · Экшен · Фантастика",price:10,img:"https://image.tmdb.org/t/p/w500/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg",desc:"Майлз снова отправляется в путешествие по мультивселенной и сталкивается с большим сообществом героев-пауков, у каждого из которых своё представление о судьбе.",cast:"Шамейк Мур · Хейли Стайнфелд · Оскар Айзек",trailer:"https://www.youtube.com/results?search_query=Across+the+Spider-Verse+official+trailer"},
-{name:"Паддингтон 2",year:"2017",genre:"Комедия · Семейный · Приключение",price:8.5,img:"https://image.tmdb.org/t/p/w500/1OJ9vkD5xPt3L2b6bA7n0v1h3z.jpg",desc:"Медвежонок Паддингтон хочет сделать особенный подарок тёте Люси, но редкая книга неожиданно втягивает его в запутанное приключение.",cast:"Бен Уишоу · Хью Бонневилль · Салли Хокинс",trailer:"https://www.youtube.com/results?search_query=Paddington+2+official+trailer"},
+{name:"Паддингтон 2",year:"2017",genre:"Комедия · Семейный · Приключение",price:8.5,img:"https://m.media-amazon.com/images/M/MV5BNzJjZmVmYzUtOTFmZi00NmQ4LWFjZWEtMjM4OWY5ODVmMTk3XkEyXkFqcGc%40._V1_.jpg",desc:"Медвежонок Паддингтон хочет сделать особенный подарок тёте Люси, но редкая книга неожиданно втягивает его в запутанное приключение.",cast:"Бен Уишоу · Хью Бонневилль · Салли Хокинс",trailer:"https://www.youtube.com/results?search_query=Paddington+2+official+trailer"},
 {name:"Достать ножи: Стеклянная луковица",year:"2022",genre:"Детектив · Комедия",price:9,img:"https://image.tmdb.org/t/p/w500/vDGr1YdrlfbU9DkB2R7fQ8zZ4z.jpg",desc:"Детектив Бенуа Блан приезжает на частный остров, где компания друзей оказывается в центре новой загадки. Никто не рассказывает всю правду.",cast:"Дэниел Крейг · Эдвард Нортон · Жанель Монэ",trailer:"https://www.youtube.com/results?search_query=Glass+Onion+official+trailer"},
-{name:"Марсианин",year:"2015",genre:"Фантастика · Приключение · Драма",price:10,img:"https://image.tmdb.org/t/p/w500/5aGhaIHilmxQOgAAx0tI7d2BvOb.jpg",desc:"Астронавт остаётся один на Марсе и использует знания, находчивость и чувство юмора, чтобы продержаться до возможного спасения.",cast:"Мэтт Дэймон · Джессика Честейн · Чиветел Эджиофор",trailer:"https://www.youtube.com/results?search_query=The+Martian+official+trailer"}
+{name:"Марсианин",year:"2015",genre:"Фантастика · Приключение · Драма",price:10,img:"https://bizweb.dktcdn.net/100/064/189/products/martian2015-2.jpg?v=1461263525467",desc:"Астронавт остаётся один на Марсе и использует знания, находчивость и чувство юмора, чтобы продержаться до возможного спасения.",cast:"Мэтт Дэймон · Джессика Честейн · Чиветел Эджиофор",trailer:"https://www.youtube.com/results?search_query=The+Martian+official+trailer"}
 
 ];
 const cinemas=[
@@ -317,14 +317,15 @@ function getRecommendedMovies(){
  return result;
 }
 function posterFallback(img){
- const title=img.alt||"STREAMLY";
- const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="500" height="750" viewBox="0 0 500 750"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#30343d"/><stop offset="1" stop-color="#090a0d"/></linearGradient></defs><rect width="500" height="750" fill="url(#g)"/><path d="M0 520 500 260V750H0" fill="#ffffff" opacity=".05"/><text x="250" y="340" fill="#fff" font-family="Arial,sans-serif" font-size="28" font-weight="700" text-anchor="middle">STREAMLY CINEMA</text><text x="250" y="390" fill="#aaa" font-family="Arial,sans-serif" font-size="17" text-anchor="middle">POSTER UNAVAILABLE</text></svg>`;
+ const title=(img.dataset.posterTitle||img.alt||"STREAMLY").replace(/[&<>]/g,"");
+ const safeTitle=title.length>34?title.slice(0,31)+"…":title;
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="500" height="750" viewBox="0 0 500 750"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#38465b"/><stop offset=".55" stop-color="#171d2a"/><stop offset="1" stop-color="#080a10"/></linearGradient><radialGradient id="glow"><stop stop-color="#8aa5c8" stop-opacity=".5"/><stop offset="1" stop-color="#8aa5c8" stop-opacity="0"/></radialGradient></defs><rect width="500" height="750" fill="url(#g)"/><circle cx="250" cy="245" r="260" fill="url(#glow)"/><path d="M0 570 500 390V750H0" fill="#fff" opacity=".045"/><text x="250" y="105" fill="#cbd5e1" font-family="Arial,sans-serif" font-size="18" letter-spacing="7" text-anchor="middle">STREAMLY CINEMA</text><text x="250" y="360" fill="#fff" font-family="Arial,sans-serif" font-size="30" font-weight="700" text-anchor="middle">${safeTitle}</text><path d="M165 390h170" stroke="#9fb3cf" stroke-width="2"/><text x="250" y="425" fill="#cbd5e1" font-family="Arial,sans-serif" font-size="15" letter-spacing="3" text-anchor="middle">POSTER</text></svg>`;
  img.onerror=null;img.src="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(svg);img.classList.add("poster-fallback");
 }
 function movieCard(m){
  const safe=m.name.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
  const title=escHtml(m.name),genre=escHtml(m.genre),year=escHtml(m.year);
- return `<div class="card ${state.movie?.name===m.name?'selected':''}" data-name="${title.toLowerCase()}" role="button" tabindex="0" aria-label="Открыть фильм ${title}" onclick="openMovieInfo('${safe}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openMovieInfo('${safe}')}"><img loading="lazy" decoding="async" src="${m.img}" alt="${title}" onerror="posterFallback(this)"><div class="shade"></div><div class="meta"><span class="movie-rating">★ ${movieRating(m).toFixed(1)} <span style="color:#aaa;font-weight:500">/ 10</span></span><b>${title}</b><small>${year} · ${genre}</small></div></div>`;
+ return `<div class="card ${state.movie?.name===m.name?'selected':''}" data-name="${title.toLowerCase()}" role="button" tabindex="0" aria-label="Открыть фильм ${title}"><img loading="lazy" decoding="async" src="${m.img}" alt="${title}" data-poster-title="${title}" onerror="posterFallback(this)"><div class="shade"></div><div class="meta"><span class="movie-rating">★ ${movieRating(m).toFixed(1)} <span style="color:#aaa;font-weight:500">/ 10</span></span><b>${title}</b><small>${year} · ${genre}</small></div></div>`;
 }
 function renderRows(){
  document.getElementById("popular").innerHTML=movies.slice(-8).map(movieCard).join("");
@@ -475,26 +476,28 @@ function show(id,btn){
 }
 function openMovieInfo(name){
  const m=movies.find(x=>x.name===name);if(!m)return;
+ const modal=document.getElementById("movieModal");
+ const poster=document.getElementById("moviePoster");
  document.getElementById("movieInfoTitle").textContent=m.name;
  document.getElementById("movieInfoMeta").textContent=`${m.year} · ${m.genre} · €${m.price.toFixed(2)} · ★ ${movieRating(m).toFixed(1)}/10`;
- document.getElementById("movieInfoDesc").textContent=m.desc;
- document.getElementById("movieInfoCast").innerHTML="<b>В ролях:</b> "+m.cast;
- document.getElementById("moviePoster").src=m.img;
- const q=m.trailer.match(/search_query=([^&]+)/),frame=document.getElementById("movieTrailer");
+ document.getElementById("movieInfoDesc").textContent=m.desc||"Описание фильма скоро появится.";
+ document.getElementById("movieInfoCast").innerHTML="<b>В ролях:</b> "+escHtml(m.cast||"Информация об актёрах уточняется.");
+ poster.onerror=()=>posterFallback(poster);
+ poster.dataset.posterTitle=m.name;
+ poster.alt="Постер фильма "+m.name;
+ poster.classList.remove("poster-fallback");
+ poster.src=m.img;
+ const q=(m.trailer||"").match(/search_query=([^&]+)/);
  const query=q?decodeURIComponent(q[1].replace(/\+/g," ")):(m.name+" official trailer");
  const ytSearch="https://www.youtube.com/results?search_query="+encodeURIComponent(query);
- const officialIds={
-  "Дюна":"n9xhJrPXop4",
-  "Джокер":"zAGVQLHvwOY"
- };
- const vid=officialIds[m.name];
- frame.innerHTML=vid
-   ? `<div style="width:100%"><div class="trailer-head"><b>▶ Официальный трейлер</b><a class="trailer-external" href="https://www.youtube.com/watch?v=${vid}" target="_blank" rel="noopener">YouTube ↗</a></div><iframe title="Трейлер ${m.name}" src="https://www.youtube-nocookie.com/embed/${vid}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#000"></iframe></div>`
-   : `<div style="width:100%;padding:22px"><div style="font-size:34px;margin-bottom:8px">▶</div><b style="font-size:18px">Трейлер фильма «${m.name}»</b><p style="margin:8px 0 16px;color:#aaa">Нажмите кнопку ниже — откроется трейлер этого фильма на YouTube.</p><a class="primary" style="display:inline-block;text-decoration:none" href="${ytSearch}" target="_blank" rel="noopener">Смотреть трейлер</a></div>`;
+ const frame=document.getElementById("movieTrailer");
+ frame.innerHTML=`<div style="width:100%;padding:22px"><div style="font-size:34px;margin-bottom:8px">▶</div><b style="font-size:18px">Трейлер фильма «${escHtml(m.name)}»</b><p style="margin:8px 0 16px;color:#aaa">Откройте страницу с трейлерами этого фильма.</p><a class="primary" style="display:inline-block;text-decoration:none" href="${ytSearch}" target="_blank" rel="noopener noreferrer">Смотреть трейлер</a></div>`;
  document.getElementById("movieBookBtn").onclick=()=>{closeMovieInfo();show("booking",document.querySelectorAll("nav button")[3]);selectMovie(m.name)};
- document.getElementById("movieModal").classList.add("open");
+ modal.classList.add("open");
+ modal.setAttribute("aria-hidden","false");
+ document.body.style.overflow="hidden";
 }
-function closeMovieInfo(){document.getElementById("movieModal").classList.remove("open");document.getElementById("movieTrailer").innerHTML=""}
+function closeMovieInfo(){const modal=document.getElementById("movieModal");modal.classList.remove("open");modal.setAttribute("aria-hidden","true");document.getElementById("movieTrailer").innerHTML="";document.body.style.overflow=""}
 function openRegister(){document.getElementById("registerModal").classList.add("open")}
 function closeRegister(){document.getElementById("registerModal").classList.remove("open")}
 function register(){
@@ -505,6 +508,18 @@ function register(){
 }
 function toast(t){const x=document.getElementById("toast");x.textContent=t;x.style.display="block";setTimeout(()=>x.style.display="none",1800)}
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>show(b.dataset.section,b));
+// Делегирование кликов гарантирует открытие карточки после каждой перерисовки каталога.
+document.addEventListener("click",event=>{
+ const card=event.target.closest(".card[data-name]");
+ if(card){const name=card.getAttribute("data-name");const movie=movies.find(m=>m.name.toLowerCase()===name);if(movie)openMovieInfo(movie.name);}
+ if(event.target.id==="movieModal")closeMovieInfo();
+});
+document.addEventListener("keydown",event=>{
+ if(event.key==="Escape"&&document.getElementById("movieModal").classList.contains("open"))closeMovieInfo();
+ const card=event.target.closest&&event.target.closest(".card[data-name]");
+ if(card&&(event.key==="Enter"||event.key===" ")){event.preventDefault();const movie=movies.find(m=>m.name.toLowerCase()===card.getAttribute("data-name"));if(movie)openMovieInfo(movie.name);}
+});
+
 document.getElementById("movieModal").onclick=e=>{if(e.target.id==="movieModal")closeMovieInfo()};
 document.getElementById("registerModal").onclick=e=>{if(e.target.id==="registerModal")closeRegister()};
 document.getElementById("ticketModal").onclick=e=>{if(e.target.id==="ticketModal")closeTicket()};
